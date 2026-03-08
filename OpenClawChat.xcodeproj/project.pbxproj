@@ -62,6 +62,7 @@
 		DEE53518CB98575D4DAD3D73 /* MemorySearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36AD45D57B18700C312EACC /* MemorySearchView.swift */; };
 		EB5F807F0B83DBBC0B842CD8 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0804D73C08D4C1007A6A7DC9 /* TranscriptionService.swift */; };
 		F730A44D0020D22A75F56F32 /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B30697BD1D37C84AC2418 /* BrowserView.swift */; };
+		FE78254B1EA22AE110DD45CD /* GatewayWebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = A81B36A9D7342D1B03D78DB0 /* GatewayWebSocket.swift */; };
 		FE7DA791D988569F33330FCC /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA34147109FAE01E6BDD23D6 /* AppSettings.swift */; };
 /* End PBXBuildFile section */
 
@@ -106,6 +107,7 @@
 		8A4A00DFCC8D4D5D3EDA52CE /* ConversationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationStore.swift; sourceTree = "<group>"; };
 		94C27B5151739434F872BAFC /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		9B51030C7F58133344774AF8 /* OpenClawClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawClientTests.swift; sourceTree = "<group>"; };
+		A81B36A9D7342D1B03D78DB0 /* GatewayWebSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayWebSocket.swift; sourceTree = "<group>"; };
 		A9D17E3BA7A478F272ACB57E /* OpenClawClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawClient.swift; sourceTree = "<group>"; };
 		AA809D8D00EEAC275D06DA1A /* TalkButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkButton.swift; sourceTree = "<group>"; };
 		AD19A8D10AE1DE2E9C66A7A1 /* Channel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Channel.swift; sourceTree = "<group>"; };
@@ -238,6 +240,7 @@
 			children = (
 				F163754416ED9D32F261A9AA /* AnyCodable.swift */,
 				360485AC7DD58CFAB4826D8D /* GatewayProtocol.swift */,
+				A81B36A9D7342D1B03D78DB0 /* GatewayWebSocket.swift */,
 			);
 			path = Gateway;
 			sourceTree = "<group>";
@@ -508,6 +511,7 @@
 				AE8BCE67167AE760E5D5B6E6 /* ElevenLabsTTSService.swift in Sources */,
 				8FDC21F70550C18923BDEC5A /* FileReadView.swift in Sources */,
 				3674C56264CF0A6DB74A5CD0 /* GatewayProtocol.swift in Sources */,
+				FE78254B1EA22AE110DD45CD /* GatewayWebSocket.swift in Sources */,
 				59F634A0DE7A749B88C80EAB /* MemoryDetailView.swift in Sources */,
 				DEE53518CB98575D4DAD3D73 /* MemorySearchView.swift in Sources */,
 				5C06CDB354FF121697B72420 /* Message.swift in Sources */,
