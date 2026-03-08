@@ -414,6 +414,75 @@ final class OpenClawClient {
         return request
     }
 
+    // MARK: - Tool Invocation
+
+    /// Invoke a tool directly via POST /tools/invoke.
+    /// Returns the raw result JSON Data for caller to decode into domain types.
+    func invokeTool(
+        tool: String,
+        action: String? = nil,
+        args: [String: JSONValue]? = nil,
+        sessionKey: String? = nil,
+        gatewayURL: String,
+        token: String
+    ) async throws -> Data {
+        let baseURL = gatewayURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+
+        guard let url = URL(string: "\(baseURL)/tools/invoke") else {
+            throw OpenClawError.invalidURL
+        }
+
+        guard url.scheme == "https" else {
+            throw OpenClawError.insecureConnection
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        let body = ToolInvokeRequest(
+            tool: tool,
+            action: action,
+            args: args,
+            sessionKey: sessionKey
+        )
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let http = response as? HTTPURLResponse else {
+            throw OpenClawError.invalidResponse
+        }
+
+        // Try to parse error body for both HTTP errors and {ok: false} responses
+        if !((200...299).contains(http.statusCode)) {
+            if let errorResponse = try? JSONDecoder().decode(ToolInvokeResponse.self, from: data),
+               let errorType = errorResponse.error?.type,
+               let msg = errorResponse.error?.message {
+                if errorType == "not_found" {
+                    throw OpenClawError.toolNotFound(tool)
+                }
+                throw OpenClawError.toolError(msg)
+            }
+            throw OpenClawError.httpError(http.statusCode)
+        }
+
+        let decoded = try JSONDecoder().decode(ToolInvokeResponse.self, from: data)
+
+        guard decoded.ok else {
+            let msg = decoded.error?.message ?? "Tool invocation failed"
+            throw OpenClawError.toolError(msg)
+        }
+
+        // Re-encode the result value as Data for domain-specific decoding
+        guard let result = decoded.result else {
+            return Data()
+        }
+        return try JSONEncoder().encode(result)
+    }
+
     private static func stableDeviceID() -> String {
         let key = "device_id"
         if let existing = UserDefaults.standard.string(forKey: key) {
@@ -433,6 +502,8 @@ enum OpenClawError: LocalizedError {
     case emptyResponse
     case insecureConnection
     case responseError(String)
+    case toolError(String)
+    case toolNotFound(String)
 
     var errorDescription: String? {
         switch self {
@@ -445,6 +516,8 @@ enum OpenClawError: LocalizedError {
         case .emptyResponse: return "Empty response from agent."
         case .insecureConnection: return "HTTPS is required. Plain HTTP connections are not allowed."
         case .responseError(let msg): return msg
+        case .toolError(let msg): return msg
+        case .toolNotFound(let name): return "Tool not available: \(name). Check your agent's tool configuration."
         }
     }
 }

@@ -22,7 +22,7 @@ struct AppSettingsTests {
         var settings = AppSettings.defaults
         settings.gatewayURL = "https://openclaw.samdavid.net"
         settings.ttsProvider = .elevenlabs
-        settings.agentAPIMode = .chatCompletions
+        settings.agentAPIMode = .openResponses
         settings.showTokenUsage = true
 
         let data = try JSONEncoder().encode(settings)

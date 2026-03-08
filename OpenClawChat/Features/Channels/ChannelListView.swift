@@ -7,6 +7,7 @@ struct ChannelListView: View {
 
     @State private var showAddChannel = false
     @State private var showSettings = false
+    @State private var showTools = false
 
     var body: some View {
         NavigationStack {
@@ -68,9 +69,15 @@ struct ChannelListView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: { showAddChannel = true }) {
-                        Image(systemName: "plus")
-                            .foregroundStyle(.openClawRed)
+                    HStack(spacing: 12) {
+                        Button(action: { showTools = true }) {
+                            Image(systemName: "wrench.and.screwdriver")
+                                .foregroundStyle(.openClawRed)
+                        }
+                        Button(action: { showAddChannel = true }) {
+                            Image(systemName: "plus")
+                                .foregroundStyle(.openClawRed)
+                        }
                     }
                 }
             }
@@ -79,6 +86,9 @@ struct ChannelListView: View {
             }
             .sheet(isPresented: $showAddChannel) {
                 AddChannelView(channelStore: channelStore)
+            }
+            .sheet(isPresented: $showTools) {
+                ToolsView(settings: settingsStore)
             }
         }
     }
