@@ -20,6 +20,7 @@ final class OpenClawClient {
     // MARK: - Unified Streaming
 
     /// Stream agent events using the configured API mode.
+    /// If Open Responses returns a 404, automatically falls back to Chat Completions.
     func stream(
         messages: [Message],
         gatewayURL: String,
@@ -31,7 +32,42 @@ final class OpenClawClient {
         case .chatCompletions:
             return streamChatEvents(messages: messages, gatewayURL: gatewayURL, token: token, model: model)
         case .openResponses:
-            return streamResponse(messages: messages, gatewayURL: gatewayURL, token: token, model: model)
+            return AsyncThrowingStream { continuation in
+                let task = Task {
+                    do {
+                        let responseStream = streamResponse(
+                            messages: messages, gatewayURL: gatewayURL, token: token, model: model
+                        )
+                        for try await event in responseStream {
+                            continuation.yield(event)
+                        }
+                        continuation.finish()
+                    } catch let error as OpenClawError {
+                        if case .httpErrorDetailed(let code, _, _) = error, code == 404 {
+                            logger.info("Open Responses returned 404, falling back to Chat Completions")
+                            do {
+                                let fallbackStream = streamChatEvents(
+                                    messages: messages, gatewayURL: gatewayURL, token: token, model: model
+                                )
+                                for try await event in fallbackStream {
+                                    continuation.yield(event)
+                                }
+                                continuation.finish()
+                            } catch {
+                                continuation.finish(throwing: error)
+                            }
+                        } else {
+                            continuation.finish(throwing: error)
+                        }
+                    } catch {
+                        continuation.finish(throwing: error)
+                    }
+                }
+
+                continuation.onTermination = { _ in
+                    task.cancel()
+                }
+            }
         }
     }
 

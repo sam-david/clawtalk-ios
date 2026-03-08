@@ -48,7 +48,7 @@ struct AppSettings: Codable {
         whisperModelSize: .small,
         voiceOutputEnabled: true,
         voiceInputEnabled: true,
-        agentAPIMode: .chatCompletions,
+        agentAPIMode: .openResponses,
         showTokenUsage: false
     )
 
@@ -60,7 +60,7 @@ struct AppSettings: Codable {
         whisperModelSize: WhisperModelSize,
         voiceOutputEnabled: Bool,
         voiceInputEnabled: Bool,
-        agentAPIMode: AgentAPIMode = .chatCompletions,
+        agentAPIMode: AgentAPIMode = .openResponses,
         showTokenUsage: Bool = false
     ) {
         self.gatewayURL = gatewayURL
@@ -83,7 +83,7 @@ struct AppSettings: Codable {
         whisperModelSize = try container.decode(WhisperModelSize.self, forKey: .whisperModelSize)
         voiceOutputEnabled = try container.decode(Bool.self, forKey: .voiceOutputEnabled)
         voiceInputEnabled = try container.decode(Bool.self, forKey: .voiceInputEnabled)
-        agentAPIMode = try container.decodeIfPresent(AgentAPIMode.self, forKey: .agentAPIMode) ?? .chatCompletions
+        agentAPIMode = try container.decodeIfPresent(AgentAPIMode.self, forKey: .agentAPIMode) ?? .openResponses
         showTokenUsage = try container.decodeIfPresent(Bool.self, forKey: .showTokenUsage) ?? false
     }
 }

@@ -13,7 +13,7 @@ struct AppSettingsTests {
         #expect(settings.voiceOutputEnabled == true)
         #expect(settings.voiceInputEnabled == true)
         #expect(settings.whisperModelSize == .small)
-        #expect(settings.agentAPIMode == .chatCompletions)
+        #expect(settings.agentAPIMode == .openResponses)
         #expect(settings.showTokenUsage == false)
     }
 
@@ -30,7 +30,7 @@ struct AppSettingsTests {
 
         #expect(decoded.gatewayURL == "https://openclaw.samdavid.net")
         #expect(decoded.ttsProvider == .elevenlabs)
-        #expect(decoded.agentAPIMode == .chatCompletions)
+        #expect(decoded.agentAPIMode == .openResponses)
         #expect(decoded.showTokenUsage == true)
     }
 
@@ -56,7 +56,7 @@ struct AppSettingsTests {
         #expect(decoded.ttsProvider == .openai)
 
         // New fields get defaults
-        #expect(decoded.agentAPIMode == .chatCompletions)
+        #expect(decoded.agentAPIMode == .openResponses)
         #expect(decoded.showTokenUsage == false)
     }
 
