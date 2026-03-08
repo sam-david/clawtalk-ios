@@ -373,6 +373,20 @@ final class ChatViewModel {
         channelStore?.update(channel)
     }
 
+    /// Stop all active audio and cancel any in-flight tasks.
+    func stop() {
+        sendTask?.cancel()
+        if isConversationMode {
+            isConversationMode = false
+            audioCapture.stopContinuousRecording()
+        } else if state == .recording {
+            _ = audioCapture.stopRecording()
+        }
+        speechService?.stop()
+        audioPlayback.stop()
+        state = .idle
+    }
+
     func stopSpeaking() {
         speechService?.stop()
         audioPlayback.stop()

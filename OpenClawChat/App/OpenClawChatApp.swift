@@ -65,11 +65,13 @@ struct OpenClawChatApp: App {
     }
 
     private func goBack() {
+        chatViewModel?.stop()
         chatViewModel = nil
         selectedChannel = nil
     }
 
     private func deleteCurrentChannel() {
+        chatViewModel?.stop()
         if let channel = selectedChannel {
             channelStore.delete(channel)
         }
