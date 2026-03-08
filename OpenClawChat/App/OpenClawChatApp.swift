@@ -26,7 +26,7 @@ struct OpenClawChatApp: App {
                         }
                     )
                 } else if let vm = chatViewModel, selectedChannel != nil {
-                    ChatView(viewModel: vm, settingsStore: settingsStore, onBack: goBack, onDeleteChannel: deleteCurrentChannel)
+                    ChatView(viewModel: vm, settingsStore: settingsStore, gatewayConnection: gatewayConnection, onBack: goBack, onDeleteChannel: deleteCurrentChannel)
                 } else {
                     ChannelListView(
                         channelStore: channelStore,

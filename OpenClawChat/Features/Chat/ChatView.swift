@@ -4,6 +4,7 @@ import PhotosUI
 struct ChatView: View {
     @Bindable var viewModel: ChatViewModel
     var settingsStore: SettingsStore
+    var gatewayConnection: GatewayConnection?
     var onBack: (() -> Void)?
     var onDeleteChannel: (() -> Void)?
     @State private var textInput = ""
@@ -33,10 +34,18 @@ struct ChatView: View {
 
     private var navBar: some View {
         ZStack {
-            // Centered title
-            Text(viewModel.channel.name)
-                .font(.headline)
-                .fontWeight(.semibold)
+            // Centered title with connection status
+            HStack(spacing: 6) {
+                Text(viewModel.channel.name)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+
+                if settingsStore.settings.useWebSocket, let gw = gatewayConnection {
+                    Circle()
+                        .fill(connectionColor(gw.connectionState))
+                        .frame(width: 8, height: 8)
+                }
+            }
 
             // Left/right buttons
             HStack {
@@ -397,6 +406,14 @@ struct ChatView: View {
     }
 
     // MARK: - Photo Loading
+
+    private func connectionColor(_ state: GatewayConnection.State) -> Color {
+        switch state {
+        case .connected: return .green
+        case .connecting: return .yellow
+        case .disconnected: return .red
+        }
+    }
 
     private func loadSelectedPhotos() async {
         var newImages: [Data] = []
