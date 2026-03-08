@@ -13,7 +13,7 @@ struct AppSettingsTests {
         #expect(settings.voiceOutputEnabled == true)
         #expect(settings.voiceInputEnabled == true)
         #expect(settings.whisperModelSize == .small)
-        #expect(settings.agentAPIMode == .openResponses)
+        #expect(settings.agentAPIMode == .chatCompletions)
         #expect(settings.showTokenUsage == false)
     }
 
@@ -56,7 +56,7 @@ struct AppSettingsTests {
         #expect(decoded.ttsProvider == .openai)
 
         // New fields get defaults
-        #expect(decoded.agentAPIMode == .openResponses)
+        #expect(decoded.agentAPIMode == .chatCompletions)
         #expect(decoded.showTokenUsage == false)
     }
 

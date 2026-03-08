@@ -51,10 +51,10 @@ struct SettingsView: View {
             Text("OpenClaw Gateway")
         } footer: {
             switch store.settings.agentAPIMode {
-            case .openResponses:
-                Text("Open Responses API provides token usage data and structured events. Recommended.")
             case .chatCompletions:
-                Text("Legacy Chat Completions API. Token usage data not available.")
+                Text("Standard Chat Completions API. Works with all gateways.")
+            case .openResponses:
+                Text("Open Responses API provides token usage data. Requires gateway support (endpoints.responses.enabled).")
             }
         }
     }
