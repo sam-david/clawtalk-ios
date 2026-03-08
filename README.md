@@ -282,6 +282,118 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 | [KeychainAccess](https://github.com/kishikawakatsumi/KeychainAccess) | Secure credential storage |
 | [MarkdownUI](https://github.com/gonzalezreal/swift-markdown-ui) | Markdown rendering in chat bubbles |
 
+## Gateway Setup Gotchas
+
+A consolidated list of things that can trip you up when configuring the OpenClaw gateway for ClawTalk. We hit every one of these during development.
+
+### Config file format
+
+The OpenClaw config file is at `~/.openclaw/openclaw.json` (JSON5 format). All the snippets below show fragments — merge them into your existing config, don't replace the whole file.
+
+### Tools show "Not enabled on gateway"
+
+Each tool requires the right **tool profile** on your agent. The most common fix:
+
+```json
+{
+  "agents": {
+    "list": [{
+      "id": "main",
+      "tools": {
+        "profile": "coding"
+      }
+    }]
+  }
+}
+```
+
+But some tools have additional requirements:
+
+| Tool | Requirement |
+|------|------------|
+| Memory Search / Memory Get | Needs `plugins.slots.memory` with an embedding provider configured |
+| File Read | Needs `coding` profile, or explicit `tools.alsoAllow: ["read"]` |
+| Browser | Needs browser to be running on the agent's machine |
+| Sessions | Works with `coding` or `full` profile |
+
+### Agent picker only shows one agent
+
+The `agents_list` tool is **scoped by the calling agent's subagent allowlist**. By default, an agent can only see itself. To see all agents:
+
+```json
+{
+  "agents": {
+    "list": [{
+      "id": "main",
+      "subagents": {
+        "allowAgents": ["*"]
+      }
+    }]
+  }
+}
+```
+
+Without this, you can still type any agent ID manually in the text field below the picker.
+
+### Sessions list doesn't show ClawTalk sessions
+
+This is a known limitation. The gateway HTTP API (`/v1/chat/completions`, `/v1/responses`) does **not persist sessions** between requests. Only auto-reply channel flows (Telegram, Discord, etc.) persist sessions to disk. ClawTalk sends full conversation history with each request as a workaround. See [docs/TODO.md](docs/TODO.md) for the planned gateway PR to fix this.
+
+### Agent doesn't have personality / doesn't know its name
+
+Related to the session limitation above. Without server-side session persistence, the agent doesn't get its `SOUL.md` system prompt injected. The agent responds as a generic assistant. A gateway PR is needed to enable HTTP session persistence.
+
+### Config changes not taking effect
+
+The gateway caches config with a short TTL. After editing `openclaw.json`:
+- Changes are usually picked up within seconds on the next API call
+- If not, restart the gateway process
+- No need to restart for agent config changes (agents, tools, profiles)
+
+### Tool profiles reference
+
+| Profile | What it enables |
+|---------|----------------|
+| `minimal` | Session status only |
+| `coding` | Filesystem (read/write/edit), runtime (exec/process), sessions, memory, image |
+| `messaging` | Messaging, session list/history/send, session status |
+| `full` | All built-in tools (no restriction) |
+
+You can also fine-tune with `tools.alsoAllow` and `tools.alsoDeny` arrays for individual tool names or groups (`group:fs`, `group:runtime`, `group:memory`, `group:web`, `group:ui`, `group:sessions`).
+
+### Example complete agent config
+
+Here's a working config that enables all ClawTalk features:
+
+```json
+{
+  "gateway": {
+    "http": {
+      "endpoints": {
+        "chatCompletions": { "enabled": true },
+        "responses": { "enabled": true }
+      }
+    }
+  },
+  "agents": {
+    "list": [{
+      "id": "main",
+      "workspace": "~/.openclaw/workspace",
+      "tools": {
+        "profile": "coding"
+      },
+      "subagents": {
+        "allowAgents": ["*"]
+      }
+    }]
+  }
+}
+```
+
+The `/tools/invoke` endpoint is always available when the HTTP API is enabled — no separate config needed.
+
+For memory tools, you'll additionally need an embedding provider under `plugins.slots.memory` — see the OpenClaw docs for embedding configuration.
+
 ## Security
 
 - **Credentials** stored in iOS Keychain (encrypted by Secure Enclave)
