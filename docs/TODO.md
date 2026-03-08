@@ -55,25 +55,34 @@ What's built and working:
   - Fix likely in `src/gateway/openresponses-http.ts`
   - Once fixed, restore `input/output` token display in ClawTalk (currently output-only)
 
-- [ ] **Direct tool invocation (`POST /tools/invoke`)**
-  - Invoke agent tools without going through chat
-  - Request: `{tool, action?, args, sessionKey?, dryRun?}`
-  - Response: `{ok, result}` or `{ok: false, error}`
-  - Useful tools for mobile:
-    - `memory_search` / `memory_get` — browse agent's memory
-    - `sessions_list` / `sessions_get` / `sessions_create` — manage sessions
-    - `fs_read` / `fs_list` — browse agent's workspace files
-    - `browser_screenshot` — see what the agent's browser is doing
-  - HTTP deny list: `sessions_spawn`, `sessions_send`, `gateway`, `whatsapp_login`
-  - Body limit: 2 MB
+- [x] **Direct tool invocation (`POST /tools/invoke`)**
+  - Tools dashboard accessible from channel list toolbar (wrench icon)
+  - Implemented: memory_search, memory_get, agents_list, sessions_list, session_status, session_history, browser (status/screenshot/tabs), read (files)
+  - Tool availability probing on view appear — unavailable tools shown greyed out
+  - Agent picker in New Channel flow (with manual fallback for unlisted agents)
   - Reference: `src/gateway/tools-invoke-http.ts`
-  - Docs: `docs/gateway/tools-invoke-http-api.md`
 
-- [ ] **Session management**
-  - Session key format: `agent:<agentId>:<sessionId>`
-  - Isolation modes: `main`, `per-peer`, `per-channel-peer`, `per-account-channel-peer`
-  - Could expose session switching in the app (view different conversation threads)
-  - Session pruning policies available server-side
+- [ ] **Server-side session management for HTTP API** ⚠️ REQUIRES GATEWAY PR
+  - **Problem:** The gateway HTTP API (`/v1/chat/completions`, `/v1/responses`) does NOT persist sessions between requests. Only WebSocket/auto-reply flows (Telegram, Discord, etc.) call `updateSessionStore()` after each message.
+  - **Impact on ClawTalk:**
+    - Agent doesn't get SOUL.md personality injection (no system prompt)
+    - Agent can't use tools mid-conversation (memory, browser, etc.)
+    - No server-side context compaction (full history sent every request)
+    - Sessions don't appear in the sessions list
+    - No server-side token tracking
+    - Memory is never written from ClawTalk conversations
+  - **Current workaround:** Send full conversation history with each HTTP request. Session key header (`x-openclaw-session-key`) is sent for routing/identification but session is not persisted.
+  - **What a gateway PR would need:**
+    - Call `updateSessionStore()` after HTTP API agent command execution
+    - Persist session entry with channel "clawtalk", session key, timestamps
+    - This would give ClawTalk the same session management as Telegram/Discord
+  - **Key files to modify:**
+    - `src/gateway/openai-http.ts` — Chat completions handler
+    - `src/gateway/openresponses-http.ts` — Responses handler
+    - `src/commands/agent.ts` — Session persistence logic (lines 737-752)
+    - `src/gateway/session-utils.ts` — Session store utilities
+  - Session key format: `agent:<agentId>:clawtalk-user:<deviceId>:<channelUUID>`
+  - Session version bumped on "Clear Chat" to create fresh server-side session
 
 ### Phase 3 — WebSocket & Real-Time
 
