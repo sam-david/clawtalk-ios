@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		003E5565AB736279ACC8101B /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 295A7DC5C6EA1ED94BF375BD /* WhisperKit */; };
 		070E33403E4F0078A46BB75B /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 692C6936BCF3C9DBC1A6C297 /* ToolsView.swift */; };
+		0983FEA8823D44AB57399A9B /* AnyCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = F163754416ED9D32F261A9AA /* AnyCodable.swift */; };
 		09D12A755B909BC34AD2BEE6 /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C25B6D5ECDDEFA626D5BFC9 /* ChatView.swift */; };
 		1063BE2347F75506704EC870 /* WhisperModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF09D88041DD2DBBA5674D45 /* WhisperModelManager.swift */; };
 		14411ED489DCD8CE6B7893A5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ED86A6E968730439A99EC4DE /* Assets.xcassets */; };
@@ -19,6 +20,7 @@
 		245AF90E5D51521858B02B3B /* ModelDownloadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 889DDBA7EFCCE29EEF5A7652 /* ModelDownloadView.swift */; };
 		281B270C2316328260565ED6 /* Channel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD19A8D10AE1DE2E9C66A7A1 /* Channel.swift */; };
 		2E9CEE9EDA08143B73B5379B /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA2D4B52FED9396202EFD169 /* Theme.swift */; };
+		3674C56264CF0A6DB74A5CD0 /* GatewayProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360485AC7DD58CFAB4826D8D /* GatewayProtocol.swift */; };
 		42C8880CFFC300285CBA6E2A /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56943669DFCF69496BBD0394 /* SessionsView.swift */; };
 		448036DAFC2377BCBD84DB63 /* ConversationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A4A00DFCC8D4D5D3EDA52CE /* ConversationStore.swift */; };
 		503F9884CCC1ABD748CBD35C /* ToolsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6BE9171ECBD252B2E471971 /* ToolsViewModel.swift */; };
@@ -47,11 +49,14 @@
 		A64511573410EB18DB274194 /* OpenAISTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CDCF1612065810A2AB4EF52 /* OpenAISTTService.swift */; };
 		AA19D291951EBB199433C90F /* WhisperKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5771F046876723F85EA7C73 /* WhisperKitService.swift */; };
 		AE8BCE67167AE760E5D5B6E6 /* ElevenLabsTTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877A2189AEB3876EB2034D4B /* ElevenLabsTTSService.swift */; };
+		B2D426A7C5B3C1FEAA6552E1 /* DeviceAuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADD7BF795B261E2DA2E30B1B /* DeviceAuthStore.swift */; };
+		B3FFD383E883534ECA91703A /* DeviceAuthPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E5EB50A40717338A83A5220 /* DeviceAuthPayload.swift */; };
 		BDBB3D5B59AAB0712C5EF994 /* ChannelListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3AD3CC2E835D0D4B9007C39 /* ChannelListView.swift */; };
 		C1C52788A4DD187EA1CB1FDA /* AddChannelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320859C177FC7BE8621195D2 /* AddChannelView.swift */; };
 		C2F59D2FDF34B6570D47E139 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157E344504C6463C0DE64E86 /* SettingsView.swift */; };
 		C4B5AFF28B2740E7949E7C28 /* ToolTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D778CE1C3FEB64F234E2D2C2 /* ToolTypes.swift */; };
 		C750FB47A619E50088C68FD1 /* TalkButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA809D8D00EEAC275D06DA1A /* TalkButton.swift */; };
+		C7C51E5D5BC59BAA8692D77E /* DeviceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1133415C5F146C7DF5B6F720 /* DeviceIdentity.swift */; };
 		CAFBE20440A7777427042816 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F76F3E6D36C93D058480A6AB /* ContentView.swift */; };
 		CC99F8F2960416026B76B2DE /* AudioPlaybackManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC58729EF7AA0A562F8A9DB /* AudioPlaybackManager.swift */; };
 		DEE53518CB98575D4DAD3D73 /* MemorySearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36AD45D57B18700C312EACC /* MemorySearchView.swift */; };
@@ -74,12 +79,15 @@
 		00E4ABB1857B97CB7A12F81B /* SentenceBoundaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceBoundaryTests.swift; sourceTree = "<group>"; };
 		0804D73C08D4C1007A6A7DC9 /* TranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionService.swift; sourceTree = "<group>"; };
 		0C25B6D5ECDDEFA626D5BFC9 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		0E5EB50A40717338A83A5220 /* DeviceAuthPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAuthPayload.swift; sourceTree = "<group>"; };
+		1133415C5F146C7DF5B6F720 /* DeviceIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentity.swift; sourceTree = "<group>"; };
 		157E344504C6463C0DE64E86 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		17D77806C7CA304008E4DA3E /* AgentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsView.swift; sourceTree = "<group>"; };
 		1C3AED278AAD74BD0C655B20 /* AppleTTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleTTSService.swift; sourceTree = "<group>"; };
 		23714CCE316F458DAD6FD5E9 /* MemoryDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryDetailView.swift; sourceTree = "<group>"; };
 		2D231CAC71BC381A3B9A33AA /* OpenClawTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawTypes.swift; sourceTree = "<group>"; };
 		320859C177FC7BE8621195D2 /* AddChannelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChannelView.swift; sourceTree = "<group>"; };
+		360485AC7DD58CFAB4826D8D /* GatewayProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayProtocol.swift; sourceTree = "<group>"; };
 		3FE6864862E4BB4698243ED6 /* MessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTests.swift; sourceTree = "<group>"; };
 		4CDCF1612065810A2AB4EF52 /* OpenAISTTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAISTTService.swift; sourceTree = "<group>"; };
 		4FDE6AF65D2222C8F71BBAEC /* OpenResponsesTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenResponsesTypesTests.swift; sourceTree = "<group>"; };
@@ -101,6 +109,7 @@
 		A9D17E3BA7A478F272ACB57E /* OpenClawClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawClient.swift; sourceTree = "<group>"; };
 		AA809D8D00EEAC275D06DA1A /* TalkButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkButton.swift; sourceTree = "<group>"; };
 		AD19A8D10AE1DE2E9C66A7A1 /* Channel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Channel.swift; sourceTree = "<group>"; };
+		ADD7BF795B261E2DA2E30B1B /* DeviceAuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAuthStore.swift; sourceTree = "<group>"; };
 		B1314BEFC2BD8BD9B8F9BFFD /* OpenAITTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITTSService.swift; sourceTree = "<group>"; };
 		B7FE120A90E02017D1855EE1 /* AudioCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCaptureManager.swift; sourceTree = "<group>"; };
 		B9D3E72305400282926ABB55 /* FileReadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileReadView.swift; sourceTree = "<group>"; };
@@ -119,6 +128,7 @@
 		EA2D4B52FED9396202EFD169 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		ED86A6E968730439A99EC4DE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F10A92D7D54C1006B1CF4CE0 /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
+		F163754416ED9D32F261A9AA /* AnyCodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnyCodable.swift; sourceTree = "<group>"; };
 		F23F05B748DC1AFDB470ECE5 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		F36AD45D57B18700C312EACC /* MemorySearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorySearchView.swift; sourceTree = "<group>"; };
 		F76F3E6D36C93D058480A6AB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -153,6 +163,9 @@
 		38CA5E4ED82DFCB7AC37D1D8 /* Agent */ = {
 			isa = PBXGroup;
 			children = (
+				0E5EB50A40717338A83A5220 /* DeviceAuthPayload.swift */,
+				ADD7BF795B261E2DA2E30B1B /* DeviceAuthStore.swift */,
+				1133415C5F146C7DF5B6F720 /* DeviceIdentity.swift */,
 				A9D17E3BA7A478F272ACB57E /* OpenClawClient.swift */,
 			);
 			path = Agent;
@@ -203,6 +216,7 @@
 			children = (
 				38CA5E4ED82DFCB7AC37D1D8 /* Agent */,
 				4226357900A9B64CD829BB86 /* Audio */,
+				A0835F070EE83549458C8057 /* Gateway */,
 				694BBA582DE833FDE555C7D7 /* Security */,
 				FF560D8C1B9F2DD1328E9774 /* Storage */,
 				C6EBC8D3373E512AD327A1EA /* STT */,
@@ -217,6 +231,15 @@
 				75CEEDAFE34F019389AF1775 /* SecureStorage.swift */,
 			);
 			path = Security;
+			sourceTree = "<group>";
+		};
+		A0835F070EE83549458C8057 /* Gateway */ = {
+			isa = PBXGroup;
+			children = (
+				F163754416ED9D32F261A9AA /* AnyCodable.swift */,
+				360485AC7DD58CFAB4826D8D /* GatewayProtocol.swift */,
+			);
+			path = Gateway;
 			sourceTree = "<group>";
 		};
 		AADB208185C848847D33AECB /* Resources */ = {
@@ -466,6 +489,7 @@
 			files = (
 				C1C52788A4DD187EA1CB1FDA /* AddChannelView.swift in Sources */,
 				910E342160E95C21022F75AB /* AgentsView.swift in Sources */,
+				0983FEA8823D44AB57399A9B /* AnyCodable.swift in Sources */,
 				FE7DA791D988569F33330FCC /* AppSettings.swift in Sources */,
 				79A08311B78D25662E686B40 /* AppleTTSService.swift in Sources */,
 				512B6173FBCDB3096B3DF33F /* AudioCaptureManager.swift in Sources */,
@@ -478,8 +502,12 @@
 				5FFF757A4D678E44910B66F6 /* ChatViewModel.swift in Sources */,
 				CAFBE20440A7777427042816 /* ContentView.swift in Sources */,
 				448036DAFC2377BCBD84DB63 /* ConversationStore.swift in Sources */,
+				B3FFD383E883534ECA91703A /* DeviceAuthPayload.swift in Sources */,
+				B2D426A7C5B3C1FEAA6552E1 /* DeviceAuthStore.swift in Sources */,
+				C7C51E5D5BC59BAA8692D77E /* DeviceIdentity.swift in Sources */,
 				AE8BCE67167AE760E5D5B6E6 /* ElevenLabsTTSService.swift in Sources */,
 				8FDC21F70550C18923BDEC5A /* FileReadView.swift in Sources */,
+				3674C56264CF0A6DB74A5CD0 /* GatewayProtocol.swift in Sources */,
 				59F634A0DE7A749B88C80EAB /* MemoryDetailView.swift in Sources */,
 				DEE53518CB98575D4DAD3D73 /* MemorySearchView.swift in Sources */,
 				5C06CDB354FF121697B72420 /* Message.swift in Sources */,

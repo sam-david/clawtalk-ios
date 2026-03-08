@@ -51,6 +51,20 @@ final class SecureStorage {
         }
     }
 
+    // MARK: - Generic Key Access
+
+    func getString(_ key: String) -> String? {
+        try? keychain.get(key)
+    }
+
+    func setString(_ value: String?, forKey key: String) {
+        if let value {
+            try? keychain.set(value, key: key)
+        } else {
+            try? keychain.remove(key)
+        }
+    }
+
     func clearAll() {
         try? keychain.removeAll()
     }
