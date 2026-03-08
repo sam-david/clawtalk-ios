@@ -8,6 +8,8 @@ struct OpenClawChatApp: App {
     @State private var chatViewModel: ChatViewModel?
     @State private var showModelDownload = false
     @State private var modelManager = WhisperModelManager.shared
+    @State private var cachedSTT: WhisperKitService?
+    @State private var cachedSTTModelSize: WhisperModelSize?
 
     var body: some Scene {
         WindowGroup {
@@ -56,7 +58,7 @@ struct OpenClawChatApp: App {
     }
 
     private func selectChannel(_ channel: Channel) {
-        let vm = ChatViewModel(settings: settingsStore, channel: channel)
+        let vm = ChatViewModel(settings: settingsStore, channel: channel, channelStore: channelStore)
         configureServices(for: vm)
         chatViewModel = vm
         selectedChannel = channel
@@ -84,8 +86,16 @@ struct OpenClawChatApp: App {
         let secure = SecureStorage.shared
         let s = settingsStore.settings
 
-        // STT
-        let stt: any TranscriptionService = WhisperKitService(modelSize: s.whisperModelSize)
+        // STT — reuse cached instance if model size hasn't changed
+        let stt: any TranscriptionService
+        if let cached = cachedSTT, cachedSTTModelSize == s.whisperModelSize {
+            stt = cached
+        } else {
+            let service = WhisperKitService(modelSize: s.whisperModelSize)
+            cachedSTT = service
+            cachedSTTModelSize = s.whisperModelSize
+            stt = service
+        }
 
         // TTS
         let tts: any SpeechService = {

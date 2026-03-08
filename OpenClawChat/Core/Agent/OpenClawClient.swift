@@ -5,7 +5,7 @@ private let logger = Logger(subsystem: "com.openclaw.clawtalk", category: "netwo
 
 final class OpenClawClient {
     private let session: URLSession
-    private let deviceID: String
+    let deviceID: String
 
     init() {
         let config = URLSessionConfiguration.default
@@ -26,17 +26,19 @@ final class OpenClawClient {
         gatewayURL: String,
         token: String,
         model: String = "openclaw:main",
-        apiMode: AgentAPIMode
+        apiMode: AgentAPIMode,
+        sessionKey: String? = nil,
+        messageChannel: String? = nil
     ) -> AsyncThrowingStream<AgentStreamEvent, Error> {
         switch apiMode {
         case .chatCompletions:
-            return streamChatEvents(messages: messages, gatewayURL: gatewayURL, token: token, model: model)
+            return streamChatEvents(messages: messages, gatewayURL: gatewayURL, token: token, model: model, sessionKey: sessionKey, messageChannel: messageChannel)
         case .openResponses:
             return AsyncThrowingStream { continuation in
                 let task = Task {
                     do {
                         let responseStream = streamResponse(
-                            messages: messages, gatewayURL: gatewayURL, token: token, model: model
+                            messages: messages, gatewayURL: gatewayURL, token: token, model: model, sessionKey: sessionKey, messageChannel: messageChannel
                         )
                         for try await event in responseStream {
                             continuation.yield(event)
@@ -47,7 +49,7 @@ final class OpenClawClient {
                             logger.info("Open Responses returned 404, falling back to Chat Completions")
                             do {
                                 let fallbackStream = streamChatEvents(
-                                    messages: messages, gatewayURL: gatewayURL, token: token, model: model
+                                    messages: messages, gatewayURL: gatewayURL, token: token, model: model, sessionKey: sessionKey, messageChannel: messageChannel
                                 )
                                 for try await event in fallbackStream {
                                     continuation.yield(event)
@@ -77,12 +79,14 @@ final class OpenClawClient {
         messages: [Message],
         gatewayURL: String,
         token: String,
-        model: String
+        model: String,
+        sessionKey: String? = nil,
+        messageChannel: String? = nil
     ) -> AsyncThrowingStream<AgentStreamEvent, Error> {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
-                    let request = try buildRequest(messages: messages, gatewayURL: gatewayURL, token: token, model: model)
+                    let request = try buildRequest(messages: messages, gatewayURL: gatewayURL, token: token, model: model, sessionKey: sessionKey, messageChannel: messageChannel)
                     let (bytes, response) = try await session.bytes(for: request)
 
                     guard let http = response as? HTTPURLResponse else {
@@ -134,13 +138,15 @@ final class OpenClawClient {
         messages: [Message],
         gatewayURL: String,
         token: String,
-        model: String
+        model: String,
+        sessionKey: String? = nil,
+        messageChannel: String? = nil
     ) -> AsyncThrowingStream<AgentStreamEvent, Error> {
         AsyncThrowingStream { continuation in
             let task = Task {
                 do {
                     let request = try buildResponseRequest(
-                        messages: messages, gatewayURL: gatewayURL, token: token, model: model
+                        messages: messages, gatewayURL: gatewayURL, token: token, model: model, sessionKey: sessionKey, messageChannel: messageChannel
                     )
                     let (bytes, response) = try await session.bytes(for: request)
 
@@ -305,7 +311,9 @@ final class OpenClawClient {
         messages: [Message],
         gatewayURL: String,
         token: String,
-        model: String
+        model: String,
+        sessionKey: String? = nil,
+        messageChannel: String? = nil
     ) throws -> URLRequest {
         let baseURL = gatewayURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
 
@@ -321,6 +329,8 @@ final class OpenClawClient {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let sessionKey { request.setValue(sessionKey, forHTTPHeaderField: "x-openclaw-session-key") }
+        if let messageChannel { request.setValue(messageChannel, forHTTPHeaderField: "x-openclaw-message-channel") }
 
         let lastUserIndex = messages.lastIndex(where: { $0.role == .user })
 
@@ -362,7 +372,9 @@ final class OpenClawClient {
         gatewayURL: String,
         token: String,
         model: String = "openclaw:main",
-        stream: Bool = true
+        stream: Bool = true,
+        sessionKey: String? = nil,
+        messageChannel: String? = nil
     ) throws -> URLRequest {
         let baseURL = gatewayURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
 
@@ -378,6 +390,8 @@ final class OpenClawClient {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let sessionKey { request.setValue(sessionKey, forHTTPHeaderField: "x-openclaw-session-key") }
+        if let messageChannel { request.setValue(messageChannel, forHTTPHeaderField: "x-openclaw-message-channel") }
 
         // Only include image data for the most recent user message to avoid huge payloads
         let lastUserIndex = messages.lastIndex(where: { $0.role == .user })

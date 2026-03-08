@@ -19,20 +19,28 @@ final class ChatViewModel {
     var errorMessage: String?
     var isConversationMode = false
 
-    let channel: Channel
+    var channel: Channel
     private let openClaw = OpenClawClient()
     private let audioCapture = AudioCaptureManager()
     private let audioPlayback = AudioPlaybackManager()
     private let conversationStore = ConversationStore.shared
     private var settings: SettingsStore
+    private var channelStore: ChannelStore?
     private var transcriptionService: (any TranscriptionService)?
     private var speechService: (any SpeechService)?
     private var sendTask: Task<Void, Never>?
     private var recordingStart: Date?
 
-    init(settings: SettingsStore, channel: Channel) {
+    /// Stable session key for this channel, used for server-side session management.
+    var sessionKey: String {
+        let base = "agent:\(channel.agentId):clawtalk-user:\(openClaw.deviceID)"
+        return channel.sessionVersion > 0 ? "\(base)-v\(channel.sessionVersion)" : base
+    }
+
+    init(settings: SettingsStore, channel: Channel, channelStore: ChannelStore? = nil) {
         self.settings = settings
         self.channel = channel
+        self.channelStore = channelStore
         self.messages = conversationStore.load(channelId: channel.id)
     }
 
@@ -233,11 +241,13 @@ final class ChatViewModel {
             }
 
             let eventStream = openClaw.stream(
-                messages: messages.filter { !$0.isStreaming },
+                messages: [userMessage],
                 gatewayURL: settings.settings.gatewayURL,
                 token: settings.gatewayToken,
                 model: channel.modelString,
-                apiMode: settings.settings.agentAPIMode
+                apiMode: settings.settings.agentAPIMode,
+                sessionKey: sessionKey,
+                messageChannel: "clawtalk"
             )
 
             state = .streaming
@@ -356,6 +366,8 @@ final class ChatViewModel {
     func clearHistory() {
         messages.removeAll()
         conversationStore.clear(channelId: channel.id)
+        channel.sessionVersion += 1
+        channelStore?.update(channel)
     }
 
     func stopSpeaking() {
