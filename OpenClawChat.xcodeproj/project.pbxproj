@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -39,6 +39,7 @@
 		79A08311B78D25662E686B40 /* AppleTTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C3AED278AAD74BD0C655B20 /* AppleTTSService.swift */; };
 		7A3A885A502D9B7B5AE79F6D /* OpenClawChatApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A4C0ABDD83CC6E40353506 /* OpenClawChatApp.swift */; };
 		821EAA067F9AA661A6082E89 /* OpenClawClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9D17E3BA7A478F272ACB57E /* OpenClawClient.swift */; };
+		864213D1D2AA28833D7349BC /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F3233D944284B9FC2C12DE3 /* OnboardingView.swift */; };
 		8763DE5CB3314C6CF3AEBB76 /* MessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FE6864862E4BB4698243ED6 /* MessageTests.swift */; };
 		89781F3F2937FA8D81C495C3 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C120093996D280C93F8593 /* SettingsStore.swift */; };
 		8FDC21F70550C18923BDEC5A /* FileReadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9D3E72305400282926ABB55 /* FileReadView.swift */; };
@@ -90,6 +91,7 @@
 		2D231CAC71BC381A3B9A33AA /* OpenClawTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawTypes.swift; sourceTree = "<group>"; };
 		320859C177FC7BE8621195D2 /* AddChannelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChannelView.swift; sourceTree = "<group>"; };
 		360485AC7DD58CFAB4826D8D /* GatewayProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayProtocol.swift; sourceTree = "<group>"; };
+		3F3233D944284B9FC2C12DE3 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		3FE6864862E4BB4698243ED6 /* MessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTests.swift; sourceTree = "<group>"; };
 		4CDCF1612065810A2AB4EF52 /* OpenAISTTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAISTTService.swift; sourceTree = "<group>"; };
 		4FDE6AF65D2222C8F71BBAEC /* OpenResponsesTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenResponsesTypesTests.swift; sourceTree = "<group>"; };
@@ -125,7 +127,7 @@
 		CD997A26A3CF33D2B41748DF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D1E445BBE364AA97155DC1E8 /* ToolTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolTypesTests.swift; sourceTree = "<group>"; };
 		D3AD3CC2E835D0D4B9007C39 /* ChannelListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelListView.swift; sourceTree = "<group>"; };
-		D752469894570E9E323ED21E /* OpenClawChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenClawChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D752469894570E9E323ED21E /* OpenClawChat.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenClawChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D778CE1C3FEB64F234E2D2C2 /* ToolTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolTypes.swift; sourceTree = "<group>"; };
 		DA34147109FAE01E6BDD23D6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		E65B30697BD1D37C84AC2418 /* BrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserView.swift; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 			isa = PBXGroup;
 			children = (
 				889DDBA7EFCCE29EEF5A7652 /* ModelDownloadView.swift */,
+				3F3233D944284B9FC2C12DE3 /* OnboardingView.swift */,
 			);
 			path = Setup;
 			sourceTree = "<group>";
@@ -429,6 +432,7 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					513800197B1C646CE1CD5BDD = {
+						DevelopmentTeam = UL35UHH8Q4;
 						ProvisioningStyle = Automatic;
 					};
 					56B52B758F1A908E1EA19C41 = {
@@ -452,6 +456,7 @@
 				43F9E2ACF8BF9583FB3C5E80 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				7E2EACBA8AB1A6FDEC7CA58B /* XCRemoteSwiftPackageReference "WhisperKit" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -519,6 +524,7 @@
 				5C06CDB354FF121697B72420 /* Message.swift in Sources */,
 				A248112760618A465685D111 /* MessageBubble.swift in Sources */,
 				245AF90E5D51521858B02B3B /* ModelDownloadView.swift in Sources */,
+				864213D1D2AA28833D7349BC /* OnboardingView.swift in Sources */,
 				A64511573410EB18DB274194 /* OpenAISTTService.swift in Sources */,
 				61C526A5958A5085EC7FFEE6 /* OpenAITTSService.swift in Sources */,
 				7A3A885A502D9B7B5AE79F6D /* OpenClawChatApp.swift in Sources */,
@@ -558,7 +564,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = XL75YR3YGP;
 				INFOPLIST_FILE = OpenClawChat/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -594,7 +599,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = XL75YR3YGP;
 				INFOPLIST_FILE = OpenClawChat/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

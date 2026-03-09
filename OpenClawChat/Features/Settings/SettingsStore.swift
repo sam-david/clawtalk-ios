@@ -25,6 +25,11 @@ final class SettingsStore {
         !settings.gatewayURL.isEmpty && !gatewayToken.isEmpty
     }
 
+    var hasCompletedOnboarding: Bool {
+        get { defaults.bool(forKey: "has_completed_onboarding") }
+        set { defaults.set(newValue, forKey: "has_completed_onboarding") }
+    }
+
     init() {
         if let data = defaults.data(forKey: settingsKey),
            let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
@@ -33,6 +38,11 @@ final class SettingsStore {
         self.gatewayToken = secure.gatewayToken ?? ""
         self.elevenLabsAPIKey = secure.elevenLabsAPIKey ?? ""
         self.openAIAPIKey = secure.openAIAPIKey ?? ""
+
+        // Auto-skip onboarding for existing configured users
+        if isConfigured && !hasCompletedOnboarding {
+            hasCompletedOnboarding = true
+        }
     }
 
     func save() {

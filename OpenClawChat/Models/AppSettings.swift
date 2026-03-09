@@ -41,6 +41,7 @@ struct AppSettings: Codable {
     var showTokenUsage: Bool
     var useWebSocket: Bool
     var webSocketPort: Int
+    var hapticsEnabled: Bool
 
     static let defaults = AppSettings(
         gatewayURL: "",
@@ -53,7 +54,8 @@ struct AppSettings: Codable {
         agentAPIMode: .openResponses,
         showTokenUsage: false,
         useWebSocket: true,
-        webSocketPort: 18789
+        webSocketPort: 18789,
+        hapticsEnabled: true
     )
 
     init(
@@ -67,7 +69,8 @@ struct AppSettings: Codable {
         agentAPIMode: AgentAPIMode = .openResponses,
         showTokenUsage: Bool = false,
         useWebSocket: Bool = true,
-        webSocketPort: Int = 18789
+        webSocketPort: Int = 18789,
+        hapticsEnabled: Bool = true
     ) {
         self.gatewayURL = gatewayURL
         self.ttsProvider = ttsProvider
@@ -80,6 +83,7 @@ struct AppSettings: Codable {
         self.showTokenUsage = showTokenUsage
         self.useWebSocket = useWebSocket
         self.webSocketPort = webSocketPort
+        self.hapticsEnabled = hapticsEnabled
     }
 
     init(from decoder: Decoder) throws {
@@ -95,5 +99,6 @@ struct AppSettings: Codable {
         showTokenUsage = try container.decodeIfPresent(Bool.self, forKey: .showTokenUsage) ?? false
         useWebSocket = try container.decodeIfPresent(Bool.self, forKey: .useWebSocket) ?? true
         webSocketPort = try container.decodeIfPresent(Int.self, forKey: .webSocketPort) ?? 18789
+        hapticsEnabled = try container.decodeIfPresent(Bool.self, forKey: .hapticsEnabled) ?? true
     }
 }

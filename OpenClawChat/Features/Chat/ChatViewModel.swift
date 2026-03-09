@@ -271,6 +271,8 @@ final class ChatViewModel {
                 try await sendMessageViaHTTP(images: images)
             }
 
+            notifySuccess()
+
             if isConversationMode {
                 audioCapture.resumeListening()
                 state = .recording
@@ -286,14 +288,20 @@ final class ChatViewModel {
             audioPlayback.stop()
             conversationStore.save(messages, channelId: channel.id)
         } catch {
+            let classified = ChatError.classify(error)
             if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
                 messages[idx].isStreaming = false
                 if messages[idx].content.isEmpty {
                     messages.remove(at: idx)
                 }
             }
+            // Tag the user message with the error for retry
+            if let userIdx = messages.lastIndex(where: { $0.role == .user }) {
+                messages[userIdx].sendError = classified.errorDescription
+            }
             audioPlayback.stop()
-            errorMessage = error.localizedDescription
+            errorMessage = classified.errorDescription
+            notifyError()
 
             if isConversationMode {
                 audioCapture.resumeListening()
@@ -614,15 +622,119 @@ final class ChatViewModel {
     var audioLevel: Float {
         audioCapture.currentLevel
     }
+
+    // MARK: - Retry
+
+    /// Retry sending a failed user message.
+    func retryMessage(id: UUID) {
+        guard state == .idle else { return }
+        guard let idx = messages.firstIndex(where: { $0.id == id && $0.role == .user && $0.hasFailed }) else { return }
+
+        let content = messages[idx].content
+        let images = messages[idx].imageData
+
+        // Clear the error on the original message
+        messages[idx].sendError = nil
+        errorMessage = nil
+
+        // Remove the original user message — sendMessage will re-add it
+        messages.remove(at: idx)
+
+        sendTask = Task {
+            await sendMessage(content, images: images)
+        }
+    }
+
+    // MARK: - Haptics
+
+    private func notifySuccess() {
+        guard settings.settings.hapticsEnabled else { return }
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+    }
+
+    private func notifyError() {
+        guard settings.settings.hapticsEnabled else { return }
+        UINotificationFeedbackGenerator().notificationOccurred(.error)
+    }
 }
 
-private enum ChatError: LocalizedError {
+enum ChatError: LocalizedError {
     case notConfigured(String)
+    case authenticationFailed(String)
+    case networkError(String)
+    case serverError(Int, String)
+    case agentError(String)
 
     var errorDescription: String? {
         switch self {
         case .notConfigured(let msg): return msg
+        case .authenticationFailed(let msg): return msg
+        case .networkError(let msg): return msg
+        case .serverError(let code, let msg): return "Server error (\(code)): \(msg)"
+        case .agentError(let msg): return msg
         }
+    }
+
+    var isRetryable: Bool {
+        switch self {
+        case .notConfigured: return false
+        case .authenticationFailed: return false
+        case .networkError, .serverError, .agentError: return true
+        }
+    }
+
+    /// Classify an error from OpenClawClient or URLSession into a ChatError.
+    static func classify(_ error: Error) -> ChatError {
+        if let openClawError = error as? OpenClawError {
+            switch openClawError {
+            case .httpError(let code), .httpErrorDetailed(let code, _, _):
+                switch code {
+                case 401, 403:
+                    return .authenticationFailed("Authentication failed (HTTP \(code)). Check your gateway token in Settings.")
+                case 408, 429:
+                    return .networkError("Request timed out or rate limited. Try again.")
+                case 400, 422:
+                    return .agentError("Bad request. The agent couldn't process this message.")
+                case 500...599:
+                    return .serverError(code, "The gateway encountered an error. Try again.")
+                default:
+                    return .serverError(code, "Unexpected error from gateway.")
+                }
+            case .invalidURL:
+                return .notConfigured("Invalid gateway URL. Check Settings.")
+            case .insecureConnection:
+                return .notConfigured("HTTPS is required. Update your gateway URL in Settings.")
+            case .invalidResponse, .emptyResponse:
+                return .agentError("Invalid or empty response from agent.")
+            case .responseError(let msg):
+                return .agentError(msg)
+            case .toolError(let msg), .toolNotFound(let msg):
+                return .agentError(msg)
+            }
+        }
+
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet:
+                return .networkError("No internet connection.")
+            case .timedOut:
+                return .networkError("Connection timed out. Check your network and gateway.")
+            case .cannotFindHost, .cannotConnectToHost:
+                return .networkError("Cannot reach gateway. Check the URL and your network.")
+            case .secureConnectionFailed:
+                return .networkError("SSL/TLS connection failed.")
+            case .cancelled:
+                return .networkError("Request cancelled.")
+            default:
+                return .networkError(urlError.localizedDescription)
+            }
+        }
+
+        if error is CancellationError {
+            return .networkError("Cancelled")
+        }
+
+        return .agentError(error.localizedDescription)
     }
 }
 

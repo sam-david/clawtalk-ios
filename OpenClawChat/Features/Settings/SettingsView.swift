@@ -33,8 +33,7 @@ struct SettingsView: View {
 
     private var connectionSection: some View {
         Section {
-            TextField("https://your-gateway.example.com", text: $store.settings.gatewayURL)
-                .textContentType(.URL)
+            TextField("Gateway URL", text: $store.settings.gatewayURL)
                 .keyboardType(.URL)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
@@ -97,10 +96,11 @@ struct SettingsView: View {
         Section {
             Toggle("Voice Input (STT)", isOn: $store.settings.voiceInputEnabled)
             Toggle("Voice Output (TTS)", isOn: $store.settings.voiceOutputEnabled)
+            Toggle("Haptic Feedback", isOn: $store.settings.hapticsEnabled)
         } header: {
             Text("Voice")
         } footer: {
-            Text("Disable voice for text-only chat. Voice input uses on-device transcription.")
+            Text("Disable voice for text-only chat. Voice input uses on-device transcription. Haptics provide tactile feedback on the talk button and message events.")
         }
     }
 

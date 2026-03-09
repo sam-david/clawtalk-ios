@@ -15,7 +15,11 @@ struct OpenClawChatApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if showModelDownload {
+                if !settingsStore.hasCompletedOnboarding {
+                    OnboardingView(settingsStore: settingsStore) {
+                        // Onboarding complete
+                    }
+                } else if showModelDownload {
                     ModelDownloadView(
                         modelSize: settingsStore.settings.whisperModelSize,
                         onComplete: {
@@ -42,6 +46,7 @@ struct OpenClawChatApp: App {
                     }
                 }
             }
+            .tint(.openClawRed)
             .preferredColorScheme(.dark)
             .onChange(of: settingsStore.settings.ttsProvider) {
                 reconfigureServices()

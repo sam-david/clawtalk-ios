@@ -3,6 +3,7 @@ import SwiftUI
 struct TalkButton: View {
     let state: ChatState
     let audioLevel: Float
+    let hapticsEnabled: Bool
     let onTap: () -> Void
     let onHoldStart: () -> Void
     let onHoldEnd: () -> Void
@@ -56,13 +57,13 @@ struct TalkButton: View {
                     if !isPressed && canInteract {
                         isPressed = true
                         isHolding = false
-                        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                        if hapticsEnabled { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
 
                         holdTimer = Task { @MainActor in
                             try? await Task.sleep(nanoseconds: holdThreshold)
                             guard !Task.isCancelled else { return }
                             isHolding = true
-                            UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                            if hapticsEnabled { UIImpactFeedbackGenerator(style: .heavy).impactOccurred() }
                             onHoldStart()
                         }
                     }
@@ -73,7 +74,7 @@ struct TalkButton: View {
                     if isPressed {
                         isPressed = false
                         if isHolding {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            if hapticsEnabled { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
                             onHoldEnd()
                         } else {
                             onTap()

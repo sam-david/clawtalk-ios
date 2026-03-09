@@ -100,7 +100,8 @@ struct ChatView: View {
                     ForEach(viewModel.messages) { message in
                         MessageBubble(
                             message: message,
-                            showTokenUsage: settingsStore.settings.showTokenUsage
+                            showTokenUsage: settingsStore.settings.showTokenUsage,
+                            onRetry: message.hasFailed ? { viewModel.retryMessage(id: message.id) } : nil
                         )
                         .id(message.id)
                     }
@@ -209,6 +210,9 @@ struct ChatView: View {
                     } else {
                         // Send button
                         Button(action: {
+                            if settingsStore.settings.hapticsEnabled {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            }
                             viewModel.sendText(textInput, images: attachedImages)
                             textInput = ""
                             attachedImages = []
@@ -236,6 +240,7 @@ struct ChatView: View {
                     TalkButton(
                         state: viewModel.state,
                         audioLevel: viewModel.audioLevel,
+                        hapticsEnabled: settingsStore.settings.hapticsEnabled,
                         onTap: { viewModel.enterConversationMode() },
                         onHoldStart: { viewModel.startRecording() },
                         onHoldEnd: { viewModel.stopRecordingAndSend() }

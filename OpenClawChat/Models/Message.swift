@@ -14,6 +14,7 @@ struct Message: Identifiable, Codable {
     var imageData: [Data]?
     var tokenUsage: TokenUsage?
     var responseId: String?
+    var sendError: String?
 
     init(role: MessageRole, content: String, isStreaming: Bool = false, imageData: [Data]? = nil) {
         self.id = UUID()
@@ -27,5 +28,9 @@ struct Message: Identifiable, Codable {
     var hasImages: Bool {
         guard let images = imageData else { return false }
         return !images.isEmpty
+    }
+
+    var hasFailed: Bool {
+        sendError != nil
     }
 }

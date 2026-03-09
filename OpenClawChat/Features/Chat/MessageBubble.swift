@@ -5,11 +5,13 @@ struct MessageBubble: View {
     let message: Message
     let onReplayAudio: (() -> Void)?
     var showTokenUsage: Bool
+    let onRetry: (() -> Void)?
 
-    init(message: Message, onReplayAudio: (() -> Void)? = nil, showTokenUsage: Bool = false) {
+    init(message: Message, onReplayAudio: (() -> Void)? = nil, showTokenUsage: Bool = false, onRetry: (() -> Void)? = nil) {
         self.message = message
         self.onReplayAudio = onReplayAudio
         self.showTokenUsage = showTokenUsage
+        self.onRetry = onRetry
     }
 
     private var isUser: Bool { message.role == .user }
@@ -26,22 +28,41 @@ struct MessageBubble: View {
                     .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                 HStack(spacing: 6) {
-                    Text(message.timestamp, style: .time)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    if isUser, message.hasFailed {
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.red)
 
-                    if !isUser, onReplayAudio != nil {
-                        Button(action: { onReplayAudio?() }) {
-                            Image(systemName: "speaker.wave.2")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    if !isUser, showTokenUsage, let usage = message.tokenUsage {
-                        Text("· \(usage.outputTokens) tokens")
+                        Text("Failed to send")
                             .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.red)
+
+                        if let onRetry {
+                            Button(action: onRetry) {
+                                Text("Retry")
+                                    .font(.caption2)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.openClawRed)
+                            }
+                        }
+                    } else {
+                        Text(message.timestamp, style: .time)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+
+                        if !isUser, onReplayAudio != nil {
+                            Button(action: { onReplayAudio?() }) {
+                                Image(systemName: "speaker.wave.2")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        if !isUser, showTokenUsage, let usage = message.tokenUsage {
+                            Text("· \(usage.outputTokens) tokens")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
                     }
                 }
             }
