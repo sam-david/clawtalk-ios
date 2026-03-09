@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -125,7 +125,7 @@
 		CD997A26A3CF33D2B41748DF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D1E445BBE364AA97155DC1E8 /* ToolTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolTypesTests.swift; sourceTree = "<group>"; };
 		D3AD3CC2E835D0D4B9007C39 /* ChannelListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelListView.swift; sourceTree = "<group>"; };
-		D752469894570E9E323ED21E /* OpenClawChat.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenClawChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D752469894570E9E323ED21E /* OpenClawChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenClawChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D778CE1C3FEB64F234E2D2C2 /* ToolTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolTypes.swift; sourceTree = "<group>"; };
 		DA34147109FAE01E6BDD23D6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		E65B30697BD1D37C84AC2418 /* BrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserView.swift; sourceTree = "<group>"; };
@@ -429,7 +429,6 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					513800197B1C646CE1CD5BDD = {
-						DevelopmentTeam = UL35UHH8Q4;
 						ProvisioningStyle = Automatic;
 					};
 					56B52B758F1A908E1EA19C41 = {
@@ -453,7 +452,6 @@
 				43F9E2ACF8BF9583FB3C5E80 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				7E2EACBA8AB1A6FDEC7CA58B /* XCRemoteSwiftPackageReference "WhisperKit" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -560,6 +558,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XL75YR3YGP;
 				INFOPLIST_FILE = OpenClawChat/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -595,6 +594,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = XL75YR3YGP;
 				INFOPLIST_FILE = OpenClawChat/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

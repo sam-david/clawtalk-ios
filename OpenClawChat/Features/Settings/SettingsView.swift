@@ -54,7 +54,10 @@ struct SettingsView: View {
                 HStack {
                     Text("WebSocket Port")
                     Spacer()
-                    TextField("18789", value: $store.settings.webSocketPort, format: .number)
+                    TextField("18789", text: Binding(
+                        get: { String(store.settings.webSocketPort) },
+                        set: { store.settings.webSocketPort = Int($0) ?? 18789 }
+                    ))
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 80)
