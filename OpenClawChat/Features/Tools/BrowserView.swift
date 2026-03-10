@@ -9,13 +9,7 @@ struct BrowserView: View {
                 // Status section
                 Section {
                     if let status = viewModel.browserStatusText {
-                        Text(status)
-                            .font(.system(.body, design: .monospaced))
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        JSONPrettyView(jsonString: status)
                     }
 
                     Button(action: {
@@ -65,13 +59,7 @@ struct BrowserView: View {
                 // Tabs section
                 Section {
                     if let tabs = viewModel.browserTabsText {
-                        Text(tabs)
-                            .font(.system(.body, design: .monospaced))
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        JSONPrettyView(jsonString: tabs)
                     }
 
                     Button(action: {
