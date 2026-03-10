@@ -67,15 +67,16 @@ What's built and working:
 - [x] **WebSocket image support** (`attachments` array, max 5MB)
 - [x] **Display model in responses** (HTTP only — WS chat events don't include model name)
 
-- [ ] **Real-time events via WebSocket**
+- [x] **Real-time events via WebSocket**
   - Agent status changes (push events)
-  - Presence/heartbeat
+  - Approval request/resolved events
 
-- [ ] **Exec approvals from phone**
+- [x] **Exec approvals from phone**
   - Agent requests permission to run a command
-  - In-app approval dialog + push notification
-  - User approves or denies from ClawTalk
-  - Requires `operator.approvals` scope
+  - In-app approval banner with Allow Once / Allow Always / Deny
+  - Haptic feedback on approval request
+  - Countdown timer showing expiration
+  - Requires `operator.approvals` scope (already included in handshake)
 
 - [ ] **Memory/tools via WebSocket RPC**
   - Route `memory.search`, `tools.catalog` through WebSocket instead of HTTP `/tools/invoke`
@@ -105,12 +106,11 @@ What's built and working:
 
 The official OpenClaw iOS app (`apps/ios/`) operates as a `role: "node"` — a device peripheral the agent can invoke remotely. ClawTalk currently operates as a chat client only. Adding node mode would let the agent use the phone's hardware and sensors.
 
-- [ ] **Register as an OpenClaw node**
+- [x] **Register as an OpenClaw node**
   - Register over WebSocket with `role: "node"`
-  - Declare capabilities: `camera`, `canvas`, `screen`, `location`, `voice`, `notifications`, `device`
+  - Declare capabilities: `device`, `notifications`
   - Agent invokes device features remotely via `node.invoke`
   - Device pairing + approval workflow for security
-  - This is the foundational piece — all capabilities below depend on it
   - Reference: `docs/platforms/ios.md`, official app `Sources/Capabilities/NodeCapabilityRouter.swift`
 
 - [ ] **Camera capability**
@@ -141,15 +141,14 @@ The official OpenClaw iOS app (`apps/ios/`) operates as a `role: "node"` — a d
   - Screen recording via ReplayKit (`screen.record`)
   - Reference: official app `Sources/Screen/ScreenRecordService.swift`
 
-- [ ] **Local notifications**
+- [x] **Local notifications**
   - Agent can push local notifications to the device via `system.notify`
   - Full `UNUserNotifications` integration with authorization flow
   - Reference: official app `Sources/Services/NotificationService.swift`
 
-- [ ] **Device info/status**
+- [x] **Device info/status**
   - `device.status` — battery level, thermal state, locale, timezone
   - `device.info` — model, OS version, screen size
-  - Trivial to implement, useful for agent context
   - Reference: official app `Sources/Device/DeviceInfoHelper.swift`
 
 - [ ] **Contacts access**

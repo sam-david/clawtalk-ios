@@ -48,6 +48,9 @@ struct OpenClawChatApp: App {
                     }
                 }
             }
+            .overlay {
+                ApprovalOverlayView(gatewayConnection: gatewayConnection)
+            }
             .tint(.openClawRed)
             .preferredColorScheme(.dark)
             .task {

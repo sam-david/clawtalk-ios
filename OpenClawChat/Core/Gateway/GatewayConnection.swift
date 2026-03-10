@@ -1,5 +1,6 @@
 import Foundation
 import OSLog
+import UIKit
 
 /// High-level gateway connection wrapper over GatewayWebSocket.
 /// Provides chat-specific methods and event routing.
@@ -17,6 +18,8 @@ final class GatewayConnection {
 
     private(set) var connectionState: State = .disconnected
     private(set) var lastError: String?
+    private(set) var pendingApprovals: [PendingApproval] = []
+    private(set) var agentStatus: AgentStatusInfo?
 
     // MARK: - Private
 
@@ -169,6 +172,28 @@ final class GatewayConnection {
         return response.models
     }
 
+    // MARK: - Exec Approvals
+
+    /// Resolve a pending exec approval.
+    func resolveApproval(id: String, decision: String) async throws {
+        guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
+        let _: ApprovalResolveResponse = try await gw.requestDecoded(
+            method: "exec.approval.resolve",
+            params: [
+                "id": AnyCodable(id),
+                "decision": AnyCodable(decision),
+            ]
+        )
+        // Remove from pending list immediately
+        pendingApprovals.removeAll { $0.id == id }
+        logger.info("approval resolved: \(id, privacy: .public) → \(decision, privacy: .public)")
+    }
+
+    /// Remove expired approvals.
+    func pruneExpiredApprovals() {
+        pendingApprovals.removeAll { $0.isExpired }
+    }
+
     // MARK: - RPC Convenience
 
     /// Make a raw RPC request.
@@ -184,8 +209,17 @@ final class GatewayConnection {
         case .snapshot(let hello):
             logger.info("gateway snapshot received (uptime: \(hello.snapshot.uptimems)ms)")
         case .event(let evt):
-            if evt.event == "chat" {
+            switch evt.event {
+            case "chat":
                 decodeChatEvent(evt)
+            case "exec.approval.requested":
+                handleApprovalRequested(evt)
+            case "exec.approval.resolved":
+                handleApprovalResolved(evt)
+            case "agent":
+                handleAgentEvent(evt)
+            default:
+                break
             }
         case .seqGap(let expected, let received):
             logger.warning("event sequence gap: expected \(expected), got \(received)")
@@ -205,6 +239,55 @@ final class GatewayConnection {
         }
     }
 
+    private func handleApprovalRequested(_ evt: EventFrame) {
+        guard let payload = evt.payload,
+              let data = try? JSONEncoder().encode(payload),
+              let event = try? JSONDecoder().decode(ExecApprovalEvent.self, from: data)
+        else {
+            logger.error("failed to decode exec.approval.requested")
+            return
+        }
+
+        let approval = PendingApproval(
+            id: event.id,
+            command: event.request.command,
+            commandArgv: event.request.commandArgv,
+            cwd: event.request.cwd,
+            host: event.request.host,
+            agentId: event.request.agentId,
+            ask: event.request.ask,
+            createdAt: Date(timeIntervalSince1970: event.createdAtMs / 1000),
+            expiresAt: Date(timeIntervalSince1970: event.expiresAtMs / 1000)
+        )
+
+        // Don't add duplicates
+        if !pendingApprovals.contains(where: { $0.id == approval.id }) {
+            pendingApprovals.append(approval)
+            UINotificationFeedbackGenerator().notificationOccurred(.warning)
+            logger.info("approval requested: \(approval.displayCommand, privacy: .public)")
+        }
+    }
+
+    private func handleApprovalResolved(_ evt: EventFrame) {
+        guard let payload = evt.payload,
+              let data = try? JSONEncoder().encode(payload),
+              let event = try? JSONDecoder().decode(ExecApprovalResolvedEvent.self, from: data)
+        else { return }
+
+        pendingApprovals.removeAll { $0.id == event.id }
+        logger.info("approval resolved externally: \(event.id, privacy: .public) → \(event.decision, privacy: .public)")
+    }
+
+    private func handleAgentEvent(_ evt: EventFrame) {
+        guard let payload = evt.payload,
+              let data = try? JSONEncoder().encode(payload),
+              let status = try? JSONDecoder().decode(AgentStatusInfo.self, from: data)
+        else { return }
+
+        agentStatus = status
+        logger.info("agent status: \(status.status ?? "unknown", privacy: .public)")
+    }
+
     private func handleStateChange(_ state: GatewayWebSocket.ConnectionState) {
         let newState: State = switch state {
         case .connected: .connected
@@ -213,6 +296,11 @@ final class GatewayConnection {
         }
         logger.info("gateway state: \(String(describing: self.connectionState)) → \(String(describing: newState))")
         connectionState = newState
+
+        if newState == .disconnected {
+            pendingApprovals.removeAll()
+            agentStatus = nil
+        }
     }
 
 }
@@ -255,4 +343,19 @@ struct ChatHistoryMessage: Codable, Sendable {
     let role: String?
     let content: AnyCodable?  // Can be string or array of content parts
     let timestamp: Int?
+}
+
+// MARK: - Approval Response
+
+struct ApprovalResolveResponse: Decodable {
+    let ok: Bool?
+}
+
+// MARK: - Agent Status
+
+struct AgentStatusInfo: Decodable, Sendable {
+    let status: String?
+    let agentId: String?
+    let sessionKey: String?
+    let message: String?
 }

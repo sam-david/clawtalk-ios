@@ -26,6 +26,7 @@
 		503F9884CCC1ABD748CBD35C /* ToolsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6BE9171ECBD252B2E471971 /* ToolsViewModel.swift */; };
 		5106D5D1CA3586C8193D5224 /* OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC1C02A0FCCE9B67F47D7FE0 /* OnboardingTests.swift */; };
 		512B6173FBCDB3096B3DF33F /* AudioCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7FE120A90E02017D1855EE1 /* AudioCaptureManager.swift */; };
+		527040C232E79D4A9654AAF9 /* ExecApprovalTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C1B9C66B7B1ED59F7AA723 /* ExecApprovalTypes.swift */; };
 		5446328481EF1557DF0A4BD6 /* NotificationCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF31DB427FEC1923E72342A9 /* NotificationCapability.swift */; };
 		59F634A0DE7A749B88C80EAB /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23714CCE316F458DAD6FD5E9 /* MemoryDetailView.swift */; };
 		5B314631C5CCE3A36DC54996 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3B252E6C27CE15D14486E75B /* MarkdownUI */; };
@@ -46,6 +47,7 @@
 		864213D1D2AA28833D7349BC /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F3233D944284B9FC2C12DE3 /* OnboardingView.swift */; };
 		8763DE5CB3314C6CF3AEBB76 /* MessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FE6864862E4BB4698243ED6 /* MessageTests.swift */; };
 		89781F3F2937FA8D81C495C3 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C120093996D280C93F8593 /* SettingsStore.swift */; };
+		8A44E7B7874422CCAD414F28 /* ApprovalOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 447C2E5C41E3CEFF8CA0BA5C /* ApprovalOverlayView.swift */; };
 		8B44818E00558B4E6EE439AF /* NodeConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = E64B654E8E2D21E09DD1F1DD /* NodeConnection.swift */; };
 		910E342160E95C21022F75AB /* AgentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17D77806C7CA304008E4DA3E /* AgentsView.swift */; };
 		9E15B1424F0C89BFA633AEC1 /* OpenClawTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D231CAC71BC381A3B9A33AA /* OpenClawTypes.swift */; };
@@ -53,6 +55,7 @@
 		A248112760618A465685D111 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AE389D2BF70DF0CA637650 /* MessageBubble.swift */; };
 		A5C1BC92D2B08BD9F8DE3592 /* OpenClawTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82217B54B009AB34D0726817 /* OpenClawTypesTests.swift */; };
 		A64511573410EB18DB274194 /* OpenAISTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CDCF1612065810A2AB4EF52 /* OpenAISTTService.swift */; };
+		A84F469AF228F89AA122B654 /* ApprovalBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98D3A0A8BAB3238A0EEFFC98 /* ApprovalBannerView.swift */; };
 		AA19D291951EBB199433C90F /* WhisperKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5771F046876723F85EA7C73 /* WhisperKitService.swift */; };
 		AE8BCE67167AE760E5D5B6E6 /* ElevenLabsTTSService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 877A2189AEB3876EB2034D4B /* ElevenLabsTTSService.swift */; };
 		B2D426A7C5B3C1FEAA6552E1 /* DeviceAuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADD7BF795B261E2DA2E30B1B /* DeviceAuthStore.swift */; };
@@ -101,6 +104,7 @@
 		36BFFD65EF8EA09433834262 /* ModelsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelsView.swift; sourceTree = "<group>"; };
 		3F3233D944284B9FC2C12DE3 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		3FE6864862E4BB4698243ED6 /* MessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTests.swift; sourceTree = "<group>"; };
+		447C2E5C41E3CEFF8CA0BA5C /* ApprovalOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalOverlayView.swift; sourceTree = "<group>"; };
 		4CDCF1612065810A2AB4EF52 /* OpenAISTTService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAISTTService.swift; sourceTree = "<group>"; };
 		4FDE6AF65D2222C8F71BBAEC /* OpenResponsesTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenResponsesTypesTests.swift; sourceTree = "<group>"; };
 		53F578F1633B0EC95D96AEB1 /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
@@ -119,12 +123,14 @@
 		89AE389D2BF70DF0CA637650 /* MessageBubble.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageBubble.swift; sourceTree = "<group>"; };
 		8A4A00DFCC8D4D5D3EDA52CE /* ConversationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationStore.swift; sourceTree = "<group>"; };
 		94C27B5151739434F872BAFC /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
+		98D3A0A8BAB3238A0EEFFC98 /* ApprovalBannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApprovalBannerView.swift; sourceTree = "<group>"; };
 		9B51030C7F58133344774AF8 /* OpenClawClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawClientTests.swift; sourceTree = "<group>"; };
 		A81B36A9D7342D1B03D78DB0 /* GatewayWebSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayWebSocket.swift; sourceTree = "<group>"; };
 		A9D17E3BA7A478F272ACB57E /* OpenClawClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawClient.swift; sourceTree = "<group>"; };
 		AA809D8D00EEAC275D06DA1A /* TalkButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkButton.swift; sourceTree = "<group>"; };
 		AD19A8D10AE1DE2E9C66A7A1 /* Channel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Channel.swift; sourceTree = "<group>"; };
 		ADD7BF795B261E2DA2E30B1B /* DeviceAuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAuthStore.swift; sourceTree = "<group>"; };
+		B0C1B9C66B7B1ED59F7AA723 /* ExecApprovalTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecApprovalTypes.swift; sourceTree = "<group>"; };
 		B1314BEFC2BD8BD9B8F9BFFD /* OpenAITTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITTSService.swift; sourceTree = "<group>"; };
 		B7FE120A90E02017D1855EE1 /* AudioCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCaptureManager.swift; sourceTree = "<group>"; };
 		BAC58729EF7AA0A562F8A9DB /* AudioPlaybackManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackManager.swift; sourceTree = "<group>"; };
@@ -254,6 +260,15 @@
 			path = Security;
 			sourceTree = "<group>";
 		};
+		6CD825F084A093AAFCAC2315 /* Approvals */ = {
+			isa = PBXGroup;
+			children = (
+				98D3A0A8BAB3238A0EEFFC98 /* ApprovalBannerView.swift */,
+				447C2E5C41E3CEFF8CA0BA5C /* ApprovalOverlayView.swift */,
+			);
+			path = Approvals;
+			sourceTree = "<group>";
+		};
 		7C7CE440C65741C3CC7BE6D2 /* Node */ = {
 			isa = PBXGroup;
 			children = (
@@ -267,6 +282,7 @@
 			isa = PBXGroup;
 			children = (
 				F163754416ED9D32F261A9AA /* AnyCodable.swift */,
+				B0C1B9C66B7B1ED59F7AA723 /* ExecApprovalTypes.swift */,
 				6528FC4E2BC9512A84842F33 /* GatewayConnection.swift */,
 				360485AC7DD58CFAB4826D8D /* GatewayProtocol.swift */,
 				A81B36A9D7342D1B03D78DB0 /* GatewayWebSocket.swift */,
@@ -366,6 +382,7 @@
 		DF7E020B03C2BF999860D093 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				6CD825F084A093AAFCAC2315 /* Approvals */,
 				E93D5770E44B640E3A0C08EA /* Channels */,
 				BCC64E4076985D2439696D19 /* Chat */,
 				3DE7E2D45E7324AA154098EA /* Settings */,
@@ -528,6 +545,8 @@
 				0983FEA8823D44AB57399A9B /* AnyCodable.swift in Sources */,
 				FE7DA791D988569F33330FCC /* AppSettings.swift in Sources */,
 				79A08311B78D25662E686B40 /* AppleTTSService.swift in Sources */,
+				A84F469AF228F89AA122B654 /* ApprovalBannerView.swift in Sources */,
+				8A44E7B7874422CCAD414F28 /* ApprovalOverlayView.swift in Sources */,
 				512B6173FBCDB3096B3DF33F /* AudioCaptureManager.swift in Sources */,
 				CC99F8F2960416026B76B2DE /* AudioPlaybackManager.swift in Sources */,
 				F730A44D0020D22A75F56F32 /* BrowserView.swift in Sources */,
@@ -544,6 +563,7 @@
 				704F62506B1EAE481B810A9E /* DeviceInfoCapability.swift in Sources */,
 				9F1E804C10529DC7EB2B1058 /* EditChannelView.swift in Sources */,
 				AE8BCE67167AE760E5D5B6E6 /* ElevenLabsTTSService.swift in Sources */,
+				527040C232E79D4A9654AAF9 /* ExecApprovalTypes.swift in Sources */,
 				BC993E33F82D4B90F64B0587 /* GatewayConnection.swift in Sources */,
 				3674C56264CF0A6DB74A5CD0 /* GatewayProtocol.swift in Sources */,
 				FE78254B1EA22AE110DD45CD /* GatewayWebSocket.swift in Sources */,
