@@ -46,6 +46,7 @@
 		89781F3F2937FA8D81C495C3 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72C120093996D280C93F8593 /* SettingsStore.swift */; };
 		910E342160E95C21022F75AB /* AgentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17D77806C7CA304008E4DA3E /* AgentsView.swift */; };
 		9E15B1424F0C89BFA633AEC1 /* OpenClawTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D231CAC71BC381A3B9A33AA /* OpenClawTypes.swift */; };
+		9F1E804C10529DC7EB2B1058 /* EditChannelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 610A71579FC5143A94C94781 /* EditChannelView.swift */; };
 		A248112760618A465685D111 /* MessageBubble.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AE389D2BF70DF0CA637650 /* MessageBubble.swift */; };
 		A5C1BC92D2B08BD9F8DE3592 /* OpenClawTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82217B54B009AB34D0726817 /* OpenClawTypesTests.swift */; };
 		A64511573410EB18DB274194 /* OpenAISTTService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CDCF1612065810A2AB4EF52 /* OpenAISTTService.swift */; };
@@ -102,6 +103,7 @@
 		56943669DFCF69496BBD0394 /* SessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionsView.swift; sourceTree = "<group>"; };
 		56A4C0ABDD83CC6E40353506 /* OpenClawChatApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenClawChatApp.swift; sourceTree = "<group>"; };
 		59B277BAFBCA0140AB483742 /* OpenClawChatTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OpenClawChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		610A71579FC5143A94C94781 /* EditChannelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditChannelView.swift; sourceTree = "<group>"; };
 		6528FC4E2BC9512A84842F33 /* GatewayConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayConnection.swift; sourceTree = "<group>"; };
 		692C6936BCF3C9DBC1A6C297 /* ToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsView.swift; sourceTree = "<group>"; };
 		72C120093996D280C93F8593 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
@@ -372,6 +374,7 @@
 			children = (
 				320859C177FC7BE8621195D2 /* AddChannelView.swift */,
 				D3AD3CC2E835D0D4B9007C39 /* ChannelListView.swift */,
+				610A71579FC5143A94C94781 /* EditChannelView.swift */,
 			);
 			path = Channels;
 			sourceTree = "<group>";
@@ -521,6 +524,7 @@
 				B3FFD383E883534ECA91703A /* DeviceAuthPayload.swift in Sources */,
 				B2D426A7C5B3C1FEAA6552E1 /* DeviceAuthStore.swift in Sources */,
 				C7C51E5D5BC59BAA8692D77E /* DeviceIdentity.swift in Sources */,
+				9F1E804C10529DC7EB2B1058 /* EditChannelView.swift in Sources */,
 				AE8BCE67167AE760E5D5B6E6 /* ElevenLabsTTSService.swift in Sources */,
 				BC993E33F82D4B90F64B0587 /* GatewayConnection.swift in Sources */,
 				3674C56264CF0A6DB74A5CD0 /* GatewayProtocol.swift in Sources */,

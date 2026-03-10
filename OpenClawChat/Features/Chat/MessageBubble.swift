@@ -6,12 +6,14 @@ struct MessageBubble: View {
     let onReplayAudio: (() -> Void)?
     var showTokenUsage: Bool
     let onRetry: (() -> Void)?
+    let onDelete: (() -> Void)?
 
-    init(message: Message, onReplayAudio: (() -> Void)? = nil, showTokenUsage: Bool = false, onRetry: (() -> Void)? = nil) {
+    init(message: Message, onReplayAudio: (() -> Void)? = nil, showTokenUsage: Bool = false, onRetry: (() -> Void)? = nil, onDelete: (() -> Void)? = nil) {
         self.message = message
         self.onReplayAudio = onReplayAudio
         self.showTokenUsage = showTokenUsage
         self.onRetry = onRetry
+        self.onDelete = onDelete
     }
 
     private var isUser: Bool { message.role == .user }
@@ -77,6 +79,20 @@ struct MessageBubble: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 2)
+        .contextMenu {
+            Button(action: {
+                UIPasteboard.general.string = message.content
+            }) {
+                Label("Copy", systemImage: "doc.on.doc")
+            }
+
+            if let onDelete {
+                Divider()
+                Button(role: .destructive, action: onDelete) {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
     }
 
     @ViewBuilder

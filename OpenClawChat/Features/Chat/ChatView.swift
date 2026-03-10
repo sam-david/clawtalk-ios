@@ -103,7 +103,8 @@ struct ChatView: View {
                         MessageBubble(
                             message: message,
                             showTokenUsage: settingsStore.settings.showTokenUsage,
-                            onRetry: message.hasFailed ? { viewModel.retryMessage(id: message.id) } : nil
+                            onRetry: message.hasFailed ? { viewModel.retryMessage(id: message.id) } : nil,
+                            onDelete: { viewModel.deleteMessage(id: message.id) }
                         )
                         .id(message.id)
                     }

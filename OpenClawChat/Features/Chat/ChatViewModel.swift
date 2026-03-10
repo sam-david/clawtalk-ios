@@ -628,6 +628,13 @@ final class ChatViewModel {
         audioCapture.currentLevel
     }
 
+    // MARK: - Message Management
+
+    func deleteMessage(id: UUID) {
+        messages.removeAll { $0.id == id }
+        conversationStore.save(messages, channelId: channel.id)
+    }
+
     // MARK: - Retry
 
     /// Retry sending a failed user message.

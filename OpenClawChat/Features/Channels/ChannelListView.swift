@@ -9,6 +9,7 @@ struct ChannelListView: View {
     @State private var showAddChannel = false
     @State private var showSettings = false
     @State private var showTools = false
+    @State private var editingChannel: Channel?
 
     var body: some View {
         NavigationStack {
@@ -43,11 +44,22 @@ struct ChannelListView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(action: { editingChannel = channel }) {
+                            Label("Edit Channel", systemImage: "pencil")
+                        }
+                        Button(role: .destructive, action: { channelStore.delete(channel) }) {
+                            Label("Delete Channel", systemImage: "trash")
+                        }
+                    }
                 }
                 .onDelete { indexSet in
                     for idx in indexSet {
                         channelStore.delete(channelStore.channels[idx])
                     }
+                }
+                .onMove { source, destination in
+                    channelStore.move(from: source, to: destination)
                 }
             }
             .listStyle(.insetGrouped)
@@ -90,6 +102,9 @@ struct ChannelListView: View {
             }
             .sheet(isPresented: $showTools) {
                 ToolsView(settings: settingsStore, gatewayConnection: gatewayConnection)
+            }
+            .sheet(item: $editingChannel) { channel in
+                EditChannelView(channelStore: channelStore, channel: channel)
             }
         }
     }

@@ -30,6 +30,11 @@ final class ChannelStore {
         }
     }
 
+    func move(from source: IndexSet, to destination: Int) {
+        channels.move(fromOffsets: source, toOffset: destination)
+        save()
+    }
+
     func delete(_ channel: Channel) {
         channels.removeAll { $0.id == channel.id }
         ConversationStore.shared.clear(channelId: channel.id)

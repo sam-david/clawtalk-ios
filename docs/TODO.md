@@ -189,13 +189,14 @@ The official OpenClaw iOS app (`apps/ios/`) operates as a `role: "node"` — a d
   - Branch `feature/connection-status-dot` has partial work
   - Needs investigation: @Observable state updates from WS callbacks not reaching UI
 
-- [ ] **Channel editing**
+- [x] **Channel editing**
   - Rename existing channels
   - Change agent on existing channels
-  - Reorder channels
+  - Reorder channels (drag to reorder via `.onMove`)
+  - Long-press context menu on channel rows (edit / delete)
 
-- [ ] **Long-press context menu on messages**
-  - Copy message text
+- [x] **Long-press context menu on messages**
+  - Copy message text to clipboard
   - Delete individual messages
 
 - [ ] **QR code / setup code pairing**
