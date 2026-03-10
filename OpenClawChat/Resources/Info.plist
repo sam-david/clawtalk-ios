@@ -37,8 +37,22 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>ClawTalk accesses your calendar when your AI agent needs to view or create events.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ClawTalk uses the camera when your AI agent requests a photo.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>ClawTalk accesses contacts when your AI agent needs to look up or add a contact.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ClawTalk shares your location with your AI agent when requested.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>ClawTalk needs microphone access for voice input to your AI agent.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>ClawTalk accesses motion data when your AI agent requests activity or step information.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ClawTalk accesses your photos when your AI agent requests recent images.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>ClawTalk accesses reminders when your AI agent needs to view or create reminders.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>ClawTalk uses speech recognition to transcribe your voice messages.</string>
 	<key>NSUserNotificationsUsageDescription</key>

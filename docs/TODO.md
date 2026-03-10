@@ -113,17 +113,16 @@ The official OpenClaw iOS app (`apps/ios/`) operates as a `role: "node"` — a d
   - Device pairing + approval workflow for security
   - Reference: `docs/platforms/ios.md`, official app `Sources/Capabilities/NodeCapabilityRouter.swift`
 
-- [ ] **Camera capability**
-  - Agent can request photos/video from the phone's camera
-  - `camera.list` (enumerate cameras), `camera.snap` (take photo), `camera.clip` (record video)
-  - Front/back selection, quality, delay, max width params
-  - Return base64 image/video data
+- [x] **Camera capability**
+  - `camera.list` (enumerate cameras), `camera.snap` (take photo)
+  - Front/back selection, quality, max width params
+  - Return base64 JPEG image data
   - Reference: official app `Sources/Camera/CameraController.swift`
 
-- [ ] **Location capability**
+- [x] **Location capability**
   - Agent can request GPS coordinates via `location.get`
-  - Significant location monitoring for background triggers (geofencing)
-  - Supports `whenInUse` and `always` authorization modes
+  - Returns lat/lng/altitude/accuracy/speed/course
+  - Supports `whenInUse` authorization
   - Reference: official app `Sources/Location/LocationService.swift`
 
 - [ ] **Canvas/A2UI**
@@ -151,23 +150,24 @@ The official OpenClaw iOS app (`apps/ios/`) operates as a `role: "node"` — a d
   - `device.info` — model, OS version, screen size
   - Reference: official app `Sources/Device/DeviceInfoHelper.swift`
 
-- [ ] **Contacts access**
+- [x] **Contacts access**
   - `contacts.search` — search address book
   - `contacts.add` — create new contact
   - Reference: official app `Sources/Contacts/ContactsService.swift`
 
-- [ ] **Calendar/Reminders access**
+- [x] **Calendar/Reminders access**
   - `calendar.events` / `calendar.add` — query/create calendar events
   - `reminders.list` / `reminders.add` — query/create reminders
   - Reference: official app `Sources/Calendar/CalendarService.swift`, `Sources/Reminders/RemindersService.swift`
 
-- [ ] **Motion/Pedometer**
+- [x] **Motion/Pedometer**
   - `motion.activity` — activity history (walking, running, cycling, automotive, stationary)
   - `motion.pedometer` — step counts, distance, floors
   - Reference: official app `Sources/Motion/MotionService.swift`
 
-- [ ] **Photos library access**
+- [x] **Photos library access**
   - `photos.latest` — retrieve recent photos from device photo library
+  - Configurable count, image inclusion, max width
   - Reference: official app `Sources/Media/PhotoLibraryService.swift`
 
 - [ ] **Voice wake (keyword detection)**

@@ -23,10 +23,20 @@ final class NodeConnection {
 
     // MARK: - Capabilities
 
-    private static let declaredCaps = ["device", "notifications"]
+    private static let declaredCaps = [
+        "device", "notifications", "location", "contacts",
+        "calendar", "reminders", "motion", "photos", "camera",
+    ]
     private static let declaredCommands = [
         "device.status", "device.info",
         "system.notify",
+        "location.get",
+        "contacts.search", "contacts.add",
+        "calendar.events", "calendar.add",
+        "reminders.list", "reminders.add",
+        "motion.activity", "motion.pedometer",
+        "photos.latest",
+        "camera.list", "camera.snap",
     ]
 
     // MARK: - Connect
@@ -152,10 +162,13 @@ final class NodeConnection {
 
     private func dispatchCommand(_ request: NodeInvokeRequest) async throws -> String? {
         switch request.command {
+        // Device
         case "device.info":
             return try encodeJSON(DeviceInfoCapability.getInfo())
         case "device.status":
             return try await encodeJSON(DeviceInfoCapability.getStatus())
+
+        // Notifications
         case "system.notify":
             let params = request.decodedParams(as: SystemNotifyParams.self)
             try await NotificationCapability.notify(
@@ -165,6 +178,101 @@ final class NodeConnection {
                 priority: params?.priority
             )
             return "{\"ok\":true}"
+
+        // Location
+        case "location.get":
+            return try await encodeJSON(LocationCapability.getLocation())
+
+        // Contacts
+        case "contacts.search":
+            let params = request.decodedParams(as: ContactsSearchParams.self)
+            let results = try await ContactsCapability.search(
+                query: params?.query ?? "",
+                limit: params?.limit ?? 20
+            )
+            return try encodeJSON(results)
+        case "contacts.add":
+            let params = request.decodedParams(as: ContactsAddParams.self)
+            let result = try await ContactsCapability.addContact(
+                givenName: params?.givenName,
+                familyName: params?.familyName,
+                phoneNumber: params?.phoneNumber,
+                email: params?.email,
+                organization: params?.organization
+            )
+            return try encodeJSON(result)
+
+        // Calendar
+        case "calendar.events":
+            let params = request.decodedParams(as: CalendarEventsParams.self)
+            let events = try await CalendarCapability.listEvents(
+                daysAhead: params?.daysAhead ?? 7,
+                daysBack: params?.daysBack ?? 0
+            )
+            return try encodeJSON(events)
+        case "calendar.add":
+            guard let params = request.decodedParams(as: CalendarAddParams.self) else {
+                throw NodeError.unavailable("Missing calendar event params")
+            }
+            let result = try await CalendarCapability.addEvent(
+                title: params.title,
+                startDate: params.startDate,
+                endDate: params.endDate,
+                location: params.location,
+                notes: params.notes,
+                isAllDay: params.isAllDay
+            )
+            return try encodeJSON(result)
+
+        // Reminders
+        case "reminders.list":
+            let params = request.decodedParams(as: RemindersListParams.self)
+            let reminders = try await CalendarCapability.listReminders(completed: params?.completed)
+            return try encodeJSON(reminders)
+        case "reminders.add":
+            guard let params = request.decodedParams(as: RemindersAddParams.self) else {
+                throw NodeError.unavailable("Missing reminder params")
+            }
+            let result = try await CalendarCapability.addReminder(
+                title: params.title,
+                dueDate: params.dueDate,
+                notes: params.notes,
+                priority: params.priority
+            )
+            return try encodeJSON(result)
+
+        // Motion
+        case "motion.activity":
+            let params = request.decodedParams(as: MotionActivityParams.self)
+            let activities = try await MotionCapability.getActivity(hours: params?.hours ?? 1)
+            return try encodeJSON(activities)
+        case "motion.pedometer":
+            let params = request.decodedParams(as: MotionPedometerParams.self)
+            let data = try await MotionCapability.getPedometer(hours: params?.hours ?? 24)
+            return try encodeJSON(data)
+
+        // Photos
+        case "photos.latest":
+            let params = request.decodedParams(as: PhotosLatestParams.self)
+            let photos = try await PhotosCapability.getLatest(
+                count: params?.count ?? 5,
+                includeImage: params?.includeImage ?? true,
+                maxWidth: params?.maxWidth ?? 1024
+            )
+            return try encodeJSON(photos)
+
+        // Camera
+        case "camera.list":
+            return try encodeJSON(CameraCapability.listCameras())
+        case "camera.snap":
+            let params = request.decodedParams(as: CameraSnapParams.self)
+            let result = try await CameraCapability.snap(
+                camera: params?.camera,
+                quality: params?.quality ?? 0.8,
+                maxWidth: params?.maxWidth ?? 1920
+            )
+            return try encodeJSON(result)
+
         default:
             throw NodeError.unknownCommand(request.command)
         }

@@ -51,6 +51,13 @@ targets:
         NSMicrophoneUsageDescription: "ClawTalk needs microphone access for voice input to your AI agent."
         NSSpeechRecognitionUsageDescription: "ClawTalk uses speech recognition to transcribe your voice messages."
         NSUserNotificationsUsageDescription: "ClawTalk sends notifications when your AI agent needs your attention."
+        NSLocationWhenInUseUsageDescription: "ClawTalk shares your location with your AI agent when requested."
+        NSContactsUsageDescription: "ClawTalk accesses contacts when your AI agent needs to look up or add a contact."
+        NSCalendarsFullAccessUsageDescription: "ClawTalk accesses your calendar when your AI agent needs to view or create events."
+        NSRemindersFullAccessUsageDescription: "ClawTalk accesses reminders when your AI agent needs to view or create reminders."
+        NSMotionUsageDescription: "ClawTalk accesses motion data when your AI agent requests activity or step information."
+        NSPhotoLibraryUsageDescription: "ClawTalk accesses your photos when your AI agent requests recent images."
+        NSCameraUsageDescription: "ClawTalk uses the camera when your AI agent requests a photo."
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: false
           NSExceptionDomains:
