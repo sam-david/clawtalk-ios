@@ -12,121 +12,77 @@ What's built and working:
 - Image sending (up to 8 per message, base64 JPEG, both APIs)
 - Settings UI (gateway config, API mode, voice toggles, TTS/STT config, token usage display)
 - Secure credential storage (iOS Keychain)
-- HTTPS-only enforcement
+- HTTPS-only enforcement (HTTP allowed for local/private networks)
 - Conversation persistence (per-channel, local)
 - WhisperKit model download with progress bar
 - Markdown rendering in assistant messages
 - Stop speaking button (both regular and conversation mode)
+- WebSocket control plane (chat, history, abort, models list)
+- Tools dashboard (memory, agents, sessions, browser, models)
+- JSON prettifier with syntax coloring in Tools views
+- Model name display on assistant messages (HTTP only)
+- Onboarding wizard with connection test
+- Haptic feedback (configurable)
 
 ---
 
 ## Feature Backlog
 
-### Phase 1 — Quick Wins
+### Phase 1 — Quick Wins (DONE)
 
 - [x] **Multi-agent channels**
-  - OpenClaw supports `"openclaw:<agentId>"` in the model field to route to different agents
-  - Also supports `x-openclaw-agent-id` header
-  - Channel model (name, emoji, agentId) with channel list/picker UI
-  - Each channel gets its own conversation history
-
 - [x] **Image sending**
-  - Both Chat Completions and Open Responses endpoints accept base64 images
-  - Up to 8 images per message, 20 MB total
-  - Photo picker + camera capture in chat input
-  - Supported: JPEG, PNG, GIF, WebP, HEIC, HEIF
-
 - [x] **Stop speaking button in conversation mode**
-  - Available in both regular and conversation mode UI
 
 ### Phase 2 — Richer API Support
 
 - [x] **OpenResponses API (`POST /v1/responses`)**
-  - Richer item-based streaming with structured events
-  - Event types: `response.output_text.delta`, `response.completed`, `response.failed`
-  - Token usage reporting (input/output counts)
-  - Configurable via Settings (API Mode picker)
-  - Requires `gateway.http.endpoints.responses.enabled: true`
+- [x] **Direct tool invocation (`POST /tools/invoke`)**
+- [x] **Models list** (read-only, WebSocket-only, in Tools dashboard)
 
 - [ ] **Fix `input_tokens` reporting in Open Responses API**
   - Gateway reports incorrect `input_tokens` in `response.completed` events
-  - Short messages can show higher counts than long ones — values don't correlate with input length
   - `output_tokens` and `total_tokens` appear accurate
   - Fix likely in `src/gateway/openresponses-http.ts`
   - Once fixed, restore `input/output` token display in ClawTalk (currently output-only)
 
-- [x] **Direct tool invocation (`POST /tools/invoke`)**
-  - Tools dashboard accessible from channel list toolbar (wrench icon)
-  - Implemented: memory_search, memory_get, agents_list, sessions_list, session_status, session_history, browser (status/screenshot/tabs)
-  - Tool availability probing on view appear — unavailable tools shown greyed out
-  - Agent picker in New Channel flow (with manual fallback for unlisted agents)
-  - Reference: `src/gateway/tools-invoke-http.ts`
-
 - [ ] **File read in Tools dashboard** ⚠️ REQUIRES GATEWAY PR
-  - The `/tools/invoke` endpoint only exposes OpenClaw core tools (memory, sessions, browser, agents, web, etc.)
-  - Coding tools (`read`, `write`, `edit`, `exec`) are only available during full agent execution (chat endpoint agentic loop) — they are created by `createOpenClawCodingTools()` which is not called by `/tools/invoke`
-  - **Fix:** Add an option to include coding tools in `/tools/invoke`, e.g. a `profile` or `includeCoding` param that calls `createOpenClawCodingTools()` alongside `createOpenClawTools()`
-  - Key files: `src/gateway/tools-invoke-http.ts` (line ~249, where `createOpenClawTools()` is called), `src/agents/pi-tools.ts` (`createOpenClawCodingTools()`)
+  - `/tools/invoke` only exposes core OpenClaw tools — coding tools (`read`, `write`, `edit`, `exec`) are only available during full agent execution
+  - **Fix:** Add `createOpenClawCodingTools()` call to `/tools/invoke`
+  - Key files: `src/gateway/tools-invoke-http.ts` (~line 249), `src/agents/pi-tools.ts`
 
-- [ ] **Server-side session management for HTTP API** ⚠️ REQUIRES GATEWAY PR
-  - **Problem:** The gateway HTTP API (`/v1/chat/completions`, `/v1/responses`) does NOT persist sessions between requests. Only WebSocket/auto-reply flows (Telegram, Discord, etc.) call `updateSessionStore()` after each message.
-  - **Impact on ClawTalk:**
-    - Agent doesn't get SOUL.md personality injection (no system prompt)
-    - Agent can't use tools mid-conversation (memory, browser, etc.)
-    - No server-side context compaction (full history sent every request)
-    - Sessions don't appear in the sessions list
-    - No server-side token tracking
-    - Memory is never written from ClawTalk conversations
-  - **Current workaround:** Send full conversation history with each HTTP request. Session key header (`x-openclaw-session-key`) is sent for routing/identification but session is not persisted.
-  - **What a gateway PR would need:**
-    - Call `updateSessionStore()` after HTTP API agent command execution
-    - Persist session entry with channel "clawtalk", session key, timestamps
-    - This would give ClawTalk the same session management as Telegram/Discord
-  - **Key files to modify:**
-    - `src/gateway/openai-http.ts` — Chat completions handler
-    - `src/gateway/openresponses-http.ts` — Responses handler
-    - `src/commands/agent.ts` — Session persistence logic (lines 737-752)
-    - `src/gateway/session-utils.ts` — Session store utilities
-  - Session key format: `agent:<agentId>:clawtalk-user:<deviceId>:<channelUUID>`
-  - Session version bumped on "Clear Chat" to create fresh server-side session
+- [ ] **Server-side session management** ⚠️ REQUIRES GATEWAY PR
+  - Gateway HTTP/WS APIs do NOT persist sessions between requests
+  - Impact: no SOUL.md injection, no mid-conversation tool use, no memory writes, sessions don't appear in sessions list
+  - **Fix:** Call `updateSessionStore()` after HTTP/WS agent command execution
+  - Key files: `src/gateway/openai-http.ts`, `src/gateway/openresponses-http.ts`, `src/gateway/server-methods/chat.ts`, `src/commands/agent.ts` (lines 737-752)
+
+- [ ] **HTTP models list** ⚠️ REQUIRES GATEWAY PR
+  - No HTTP `/v1/models` endpoint — only WebSocket `models.list` RPC
+  - **Fix:** Add `GET /v1/models` handler to gateway
 
 ### Phase 3 — WebSocket & Real-Time
 
-- [x] **WebSocket control plane**
-  - Protocol v3: `ws://gateway:18789` or `wss://gateway/ws` (tunneled)
-  - Bidirectional — can receive events (presence, approvals, status)
-  - Handshake: challenge → connect (Ed25519 signature) → hello-ok
-  - `chat.send`, `chat.history`, `chat.abort` implemented
-  - Device identity persistence, auto-connect on channel select
-  - **Default mode is HTTP** — WebSocket is opt-in via Settings
-  - Device pairing required for remote WebSocket connections (`openclaw devices approve`)
+- [x] **WebSocket control plane** (v3 protocol, chat.send/history/abort, device identity)
+- [x] **WebSocket image support** (`attachments` array, max 5MB)
+- [x] **Display model in responses** (HTTP only — WS chat events don't include model name)
 
-- [x] **WebSocket image support**
-  - `chat.send` accepts `attachments` array with base64 image data
-  - Format: `{type: "image", mimeType: "image/jpeg", content: "<base64>"}`
-  - Max 5MB per attachment
-  - No longer falls back to HTTP for image messages
+- [ ] **Real-time events via WebSocket**
+  - Agent status changes (push events)
+  - Presence/heartbeat
 
-- [x] **Models list** (read-only, WebSocket-only)
-  - Fetch models from `models.list` RPC over WebSocket (no HTTP `/v1/models` endpoint)
-  - Read-only display in Tools dashboard, grouped by provider
-  - Shows model name, context window, reasoning capability
-  - ⚠️ **Per-request model override is NOT supported** — gateway ignores the `model` field for model selection. It's used only for agent routing (`openclaw:<agentId>`). Model resolution order: session `modelOverride` → agent config default → global default. A gateway PR would be needed to support per-request model override.
+- [ ] **Exec approvals from phone**
+  - Agent requests permission to run a command
+  - In-app approval dialog + push notification
+  - User approves or denies from ClawTalk
+  - Requires `operator.approvals` scope
 
-- [ ] **HTTP models list** ⚠️ REQUIRES GATEWAY PR
-  - The gateway has no HTTP `/v1/models` endpoint — only WebSocket `models.list` RPC
-  - In HTTP-only mode, users cannot browse available models (must enable WebSocket or type model ID manually)
-  - A gateway PR to add `GET /v1/models` would let HTTP-only users browse models too
-  - Key file: would need a new handler in `src/gateway/` similar to `openai-http.ts`
-
-- [x] **Display model in responses**
-  - Parse `model` field from Chat Completions chunks and Open Responses `response.completed`
-  - Show model name under assistant message bubble alongside token usage
-  - **Note:** WebSocket chat events do NOT include model name — HTTP only
+- [ ] **Memory/tools via WebSocket RPC**
+  - Route `memory.search`, `tools.catalog` through WebSocket instead of HTTP `/tools/invoke`
+  - Lower latency, reuses existing connection
+  - Fallback to HTTP when WebSocket unavailable
 
 #### WebSocket vs HTTP — Known Gaps (Gateway-side)
-
-These are limitations in the OpenClaw gateway, not ClawTalk. Documented here for upstream fixes.
 
 | Feature | HTTP | WebSocket | Notes |
 |---------|------|-----------|-------|
@@ -136,10 +92,8 @@ These are limitations in the OpenClaw gateway, not ClawTalk. Documented here for
 | Token usage | Yes (Open Responses) | **No** | Schema has `usage` field but never populated |
 | Models list | **No** | Yes | No HTTP `/v1/models` endpoint |
 | Chat abort | **No** | Yes | `chat.abort` RPC |
-| Session persistence | **No** | **No** | WS `chat.send` creates transcripts but not session store entries |
+| Session persistence | **No** | **No** | Neither path calls `resolveSessionStoreEntry()` |
 | Device pairing | Not required | Required | Remote WS needs `openclaw devices approve` |
-
-**Session persistence detail:** WebSocket `chat.send` calls `loadSessionEntry()` but never `resolveSessionStoreEntry()`. Telegram/Discord handlers DO call `resolveSessionStoreEntry()` which is why their sessions appear in `sessions_list`. A gateway PR to add `resolveSessionStoreEntry()` to `chat.send` would give ClawTalk persistent sessions.
 
 **Key gateway source files for upstream fixes:**
 - `src/gateway/server-methods/chat.ts` (lines 843-1247) — chat.send handler
@@ -147,71 +101,88 @@ These are limitations in the OpenClaw gateway, not ClawTalk. Documented here for
 - `src/gateway/protocol/schema/logs-chat.ts` (lines 64-81) — chat event schema
 - `src/config/sessions/store.ts` (lines 115-154) — session store persistence
 
-- [ ] **Real-time events via WebSocket**
-  - Agent status changes (push events)
-  - Presence/heartbeat
-
-- [ ] **Exec approvals from phone** (WebSocket unlocked)
-  - Agent requests permission to run a command
-  - Push notification / in-app approval dialog
-  - User approves or denies from ClawTalk
-  - Requires `operator.approvals` scope
-
-- [ ] **Memory/tools via WebSocket RPC**
-  - Route `memory.search`, `tools.catalog` through WebSocket instead of HTTP `/tools/invoke`
-  - Lower latency, reuses existing connection
-  - Fallback to HTTP when WebSocket unavailable
-
 ### Phase 4 — Node Mode (Device as Agent Peripheral)
 
+The official OpenClaw iOS app (`apps/ios/`) operates as a `role: "node"` — a device peripheral the agent can invoke remotely. ClawTalk currently operates as a chat client only. Adding node mode would let the agent use the phone's hardware and sensors.
+
 - [ ] **Register as an OpenClaw node**
-  - iOS app registers over WebSocket with role `"node"`
-  - Declares capabilities: `camera`, `canvas`, `screen`, `location`, `voice`, `notifications`, `device`
-  - Agent can then invoke device features remotely via `node.invoke`
+  - Register over WebSocket with `role: "node"`
+  - Declare capabilities: `camera`, `canvas`, `screen`, `location`, `voice`, `notifications`, `device`
+  - Agent invokes device features remotely via `node.invoke`
   - Device pairing + approval workflow for security
-  - Reference: `docs/platforms/ios.md`
+  - This is the foundational piece — all capabilities below depend on it
+  - Reference: `docs/platforms/ios.md`, official app `Sources/Capabilities/NodeCapabilityRouter.swift`
 
 - [ ] **Camera capability**
   - Agent can request photos/video from the phone's camera
-  - `camera_snap` / `camera_record` commands
-  - Return base64 or upload to agent workspace
+  - `camera.list` (enumerate cameras), `camera.snap` (take photo), `camera.clip` (record video)
+  - Front/back selection, quality, delay, max width params
+  - Return base64 image/video data
+  - Reference: official app `Sources/Camera/CameraController.swift`
 
 - [ ] **Location capability**
-  - Agent can request GPS coordinates
-  - Useful for location-aware tasks
+  - Agent can request GPS coordinates via `location.get`
+  - Significant location monitoring for background triggers (geofencing)
+  - Supports `whenInUse` and `always` authorization modes
+  - Reference: official app `Sources/Location/LocationService.swift`
 
 - [ ] **Canvas/A2UI**
   - Agent-driven visual workspace rendered in WKWebView
-  - Agent can push HTML/JS to canvas, evaluate scripts, take snapshots
-  - Operations: `canvas_navigate`, `canvas_eval`, `canvas_snapshot`, `canvas_present`
-  - Could be a secondary tab/view in the app
+  - `canvas.present` / `canvas.navigate` — load URLs
+  - `canvas.evalJS` — execute JavaScript in the webview
+  - `canvas.snapshot` — capture webview as image
+  - `a2ui.push` / `a2ui.pushJSONL` / `a2ui.reset` — push structured UI elements
+  - Deep links (`openclaw://`) from within canvas trigger app actions
+  - Could be a tab or secondary view in the app
+  - Reference: official app `Sources/Screen/ScreenController.swift`, `ScreenTab.swift`
 
 - [ ] **Screen capability**
-  - Agent can request screenshots of the app/device
-  - `screen_snapshot` / `screen_record`
+  - Agent can request screenshots of the app/device via `screen.snapshot`
+  - Screen recording via ReplayKit (`screen.record`)
+  - Reference: official app `Sources/Screen/ScreenRecordService.swift`
 
-- [ ] **Notifications**
-  - Agent can push local notifications to the device
+- [ ] **Local notifications**
+  - Agent can push local notifications to the device via `system.notify`
+  - Full `UNUserNotifications` integration with authorization flow
+  - Reference: official app `Sources/Services/NotificationService.swift`
+
+- [ ] **Device info/status**
+  - `device.status` — battery level, thermal state, locale, timezone
+  - `device.info` — model, OS version, screen size
+  - Trivial to implement, useful for agent context
+  - Reference: official app `Sources/Device/DeviceInfoHelper.swift`
+
+- [ ] **Contacts access**
+  - `contacts.search` — search address book
+  - `contacts.add` — create new contact
+  - Reference: official app `Sources/Contacts/ContactsService.swift`
+
+- [ ] **Calendar/Reminders access**
+  - `calendar.events` / `calendar.add` — query/create calendar events
+  - `reminders.list` / `reminders.add` — query/create reminders
+  - Reference: official app `Sources/Calendar/CalendarService.swift`, `Sources/Reminders/RemindersService.swift`
+
+- [ ] **Motion/Pedometer**
+  - `motion.activity` — activity history (walking, running, cycling, automotive, stationary)
+  - `motion.pedometer` — step counts, distance, floors
+  - Reference: official app `Sources/Motion/MotionService.swift`
+
+- [ ] **Photos library access**
+  - `photos.latest` — retrieve recent photos from device photo library
+  - Reference: official app `Sources/Media/PhotoLibraryService.swift`
+
+- [ ] **Voice wake (keyword detection)**
+  - On-device speech recognition listens for configurable wake words
+  - Triggers agent interaction when keyword detected
+  - Uses `SFSpeechRecognizer` for on-device recognition
+  - `voicewake.set` / `voicewake.get` for configuration
+  - Reference: official app `Sources/Voice/VoiceWakeManager.swift`
 
 ### Phase 5 — Pre-Release Polish
 
 - [x] **Onboarding flow**
-  - 5-step wizard: welcome, gateway setup guide, gateway config, connection test, voice setup
-  - Link to OpenClaw docs for gateway configuration
-  - Connection test with error classification (auth/network/SSL)
-  - Auto-skip for existing configured users
-
 - [x] **Haptic feedback**
-  - Talk button: medium on press, heavy on hold threshold, light on release
-  - Send button: light impact on tap
-  - Success/error notification haptics on message completion
-  - Configurable via "Haptic Feedback" toggle in Settings
-
 - [x] **Better error recovery**
-  - Error classification: auth (401/403), network (timeout/unreachable), server (5xx), agent errors
-  - Retry button on failed user messages
-  - User-friendly error messages
-  - Allow HTTP for local/private network addresses
 
 - [ ] **Connection status indicator**
   - Show green/yellow/red dot for WebSocket connection state
@@ -226,6 +197,52 @@ These are limitations in the OpenClaw gateway, not ClawTalk. Documented here for
 - [ ] **Long-press context menu on messages**
   - Copy message text
   - Delete individual messages
+
+- [ ] **QR code / setup code pairing**
+  - Scan QR code or enter setup code to configure gateway connection
+  - Faster onboarding than typing URLs manually
+  - Reference: official app `Sources/Onboarding/QRScannerView.swift`, `Sources/Gateway/GatewaySetupCode.swift`
+
+- [ ] **Gateway discovery (Bonjour/mDNS)**
+  - Auto-discover OpenClaw gateways on the local network
+  - Uses `_openclaw-gw._tcp` Bonjour browsing
+  - TLS fingerprint trust prompts
+  - Reference: official app `Sources/Gateway/GatewayDiscoveryModel.swift`
+
+- [ ] **Deep link handling**
+  - Handle `openclaw://` URL scheme for agent-initiated deep links
+  - Confirmation dialogs and security limits
+  - Reference: official app deep link handling
+
+- [ ] **Share extension**
+  - System share sheet integration
+  - Share text, URLs, images, or video from other apps directly into the agent session
+  - Requires separate app extension target
+  - Reference: official app `ShareExtension/ShareViewController.swift`
+
+- [ ] **Gateway status pill**
+  - Persistent status overlay showing connection state and current activity
+  - Tap to manage (reconnect, view details)
+  - Reference: official app `Sources/Status/StatusPill.swift`
+
+### Phase 6 — Platform Extensions
+
+- [ ] **APNs push notifications**
+  - Register APNs device token with gateway (`push.apns.register`)
+  - Gateway can wake app and deliver push notifications
+  - Requires push capability in provisioning profile
+
+- [ ] **Live Activity (Dynamic Island / Lock Screen)**
+  - Show gateway connection status as a Live Activity widget
+  - Requires ActivityWidget extension target
+  - Reference: official app `Sources/LiveActivity/LiveActivityManager.swift`
+
+- [ ] **Apple Watch companion app**
+  - `watch.status` — check if watch is paired/reachable
+  - `watch.notify` — push notifications to the watch
+  - Watch inbox view for messages
+  - Significant effort — separate WatchKit extension
+  - Reference: official app `WatchExtension/Sources/`
 
 ---
 
@@ -281,3 +298,19 @@ These are limitations in the OpenClaw gateway, not ClawTalk. Documented here for
 - `docs/gateway/openresponses-http-api.md` — Responses API docs
 - `docs/gateway/tools-invoke-http-api.md` — Tool invoke docs
 - `docs/platforms/ios.md` — iOS node guide
+
+### Key Source Files (Official iOS App)
+
+- `apps/ios/Sources/Capabilities/NodeCapabilityRouter.swift` — Node capability dispatch
+- `apps/ios/Sources/Camera/CameraController.swift` — Camera snap/clip
+- `apps/ios/Sources/Screen/ScreenController.swift` — Canvas/A2UI webview
+- `apps/ios/Sources/Location/LocationService.swift` — GPS/geofencing
+- `apps/ios/Sources/Voice/VoiceWakeManager.swift` — Wake word detection
+- `apps/ios/Sources/Device/DeviceInfoHelper.swift` — Device info/status
+- `apps/ios/Sources/Contacts/ContactsService.swift` — Contacts access
+- `apps/ios/Sources/Calendar/CalendarService.swift` — Calendar events
+- `apps/ios/Sources/Services/NotificationService.swift` — Local notifications
+- `apps/ios/Sources/Gateway/GatewayDiscoveryModel.swift` — Bonjour discovery
+- `apps/ios/Sources/Onboarding/QRScannerView.swift` — QR code pairing
+- `apps/ios/ShareExtension/ShareViewController.swift` — Share extension
+- `apps/ios/Sources/LiveActivity/LiveActivityManager.swift` — Dynamic Island
