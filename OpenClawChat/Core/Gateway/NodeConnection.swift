@@ -26,6 +26,7 @@ final class NodeConnection {
     private static let declaredCaps = [
         "device", "notifications", "location", "contacts",
         "calendar", "reminders", "motion", "photos", "camera",
+        "screen", "canvas", "voice",
     ]
     private static let declaredCommands = [
         "device.status", "device.info",
@@ -37,6 +38,10 @@ final class NodeConnection {
         "motion.activity", "motion.pedometer",
         "photos.latest",
         "camera.list", "camera.snap",
+        "screen.snapshot",
+        "canvas.present", "canvas.navigate",
+        "canvas.evalJS", "canvas.snapshot", "canvas.reset",
+        "voicewake.set", "voicewake.get",
     ]
 
     // MARK: - Connect
@@ -272,6 +277,57 @@ final class NodeConnection {
                 maxWidth: params?.maxWidth ?? 1920
             )
             return try encodeJSON(result)
+
+        // Screen
+        case "screen.snapshot":
+            let params = request.decodedParams(as: ScreenSnapshotParams.self)
+            let result = try await ScreenCapability.snapshot(
+                maxWidth: params?.maxWidth ?? 1024,
+                quality: params?.quality ?? 0.8
+            )
+            return try encodeJSON(result)
+
+        // Canvas
+        case "canvas.present":
+            guard let params = request.decodedParams(as: CanvasPresentParams.self) else {
+                throw NodeError.unavailable("Missing canvas URL")
+            }
+            let result = try await CanvasCapability.shared.present(url: params.url)
+            return try encodeJSON(result)
+        case "canvas.navigate":
+            guard let params = request.decodedParams(as: CanvasPresentParams.self) else {
+                throw NodeError.unavailable("Missing canvas URL")
+            }
+            let result = try await CanvasCapability.shared.navigate(url: params.url)
+            return try encodeJSON(result)
+        case "canvas.evalJS":
+            guard let params = request.decodedParams(as: CanvasEvalParams.self) else {
+                throw NodeError.unavailable("Missing JavaScript")
+            }
+            let result = try await CanvasCapability.shared.evalJS(script: params.script)
+            return try encodeJSON(result)
+        case "canvas.snapshot":
+            let params = request.decodedParams(as: CanvasSnapshotParams.self)
+            let result = try await CanvasCapability.shared.snapshot(
+                maxWidth: params?.maxWidth ?? 1024,
+                quality: params?.quality ?? 0.8
+            )
+            return try encodeJSON(result)
+        case "canvas.reset":
+            CanvasCapability.shared.reset()
+            return "{\"ok\":true}"
+
+        // Voice Wake
+        case "voicewake.set":
+            let params = request.decodedParams(as: VoiceWakeSetParams.self)
+            let result = try await VoiceWakeCapability.shared.setConfig(
+                keywords: params?.keywords ?? [],
+                enabled: params?.enabled ?? true,
+                locale: params?.locale
+            )
+            return try encodeJSON(result)
+        case "voicewake.get":
+            return try encodeJSON(VoiceWakeCapability.shared.getConfig())
 
         default:
             throw NodeError.unknownCommand(request.command)

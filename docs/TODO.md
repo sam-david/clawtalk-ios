@@ -125,19 +125,18 @@ The official OpenClaw iOS app (`apps/ios/`) operates as a `role: "node"` — a d
   - Supports `whenInUse` authorization
   - Reference: official app `Sources/Location/LocationService.swift`
 
-- [ ] **Canvas/A2UI**
+- [x] **Canvas/A2UI**
   - Agent-driven visual workspace rendered in WKWebView
   - `canvas.present` / `canvas.navigate` — load URLs
   - `canvas.evalJS` — execute JavaScript in the webview
   - `canvas.snapshot` — capture webview as image
-  - `a2ui.push` / `a2ui.pushJSONL` / `a2ui.reset` — push structured UI elements
-  - Deep links (`openclaw://`) from within canvas trigger app actions
-  - Could be a tab or secondary view in the app
+  - `canvas.reset` — clear canvas
+  - Auto-presents as sheet when agent activates canvas
   - Reference: official app `Sources/Screen/ScreenController.swift`, `ScreenTab.swift`
 
-- [ ] **Screen capability**
-  - Agent can request screenshots of the app/device via `screen.snapshot`
-  - Screen recording via ReplayKit (`screen.record`)
+- [x] **Screen capability**
+  - Agent can request screenshots of the app via `screen.snapshot`
+  - Captures current window hierarchy as JPEG with configurable quality/resize
   - Reference: official app `Sources/Screen/ScreenRecordService.swift`
 
 - [x] **Local notifications**
@@ -170,10 +169,10 @@ The official OpenClaw iOS app (`apps/ios/`) operates as a `role: "node"` — a d
   - Configurable count, image inclusion, max width
   - Reference: official app `Sources/Media/PhotoLibraryService.swift`
 
-- [ ] **Voice wake (keyword detection)**
+- [x] **Voice wake (keyword detection)**
   - On-device speech recognition listens for configurable wake words
-  - Triggers agent interaction when keyword detected
-  - Uses `SFSpeechRecognizer` for on-device recognition
+  - Triggers callback when keyword detected, auto-restarts listening
+  - Uses `SFSpeechRecognizer` with `requiresOnDeviceRecognition`
   - `voicewake.set` / `voicewake.get` for configuration
   - Reference: official app `Sources/Voice/VoiceWakeManager.swift`
 

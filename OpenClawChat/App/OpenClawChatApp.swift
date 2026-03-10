@@ -51,6 +51,12 @@ struct OpenClawChatApp: App {
             .overlay {
                 ApprovalOverlayView(gatewayConnection: gatewayConnection)
             }
+            .sheet(isPresented: Binding(
+                get: { CanvasCapability.shared.isPresented },
+                set: { CanvasCapability.shared.isPresented = $0 }
+            )) {
+                CanvasView(canvas: CanvasCapability.shared)
+            }
             .tint(.openClawRed)
             .preferredColorScheme(.dark)
             .task {
