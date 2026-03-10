@@ -49,6 +49,16 @@ struct OpenClawChatApp: App {
             }
             .tint(.openClawRed)
             .preferredColorScheme(.dark)
+            .task {
+                if settingsStore.settings.useWebSocket,
+                   settingsStore.isConfigured,
+                   gatewayConnection.connectionState == .disconnected {
+                    await gatewayConnection.connect(
+                        resolvedURL: settingsStore.settings.resolvedWebSocketURL,
+                        token: settingsStore.gatewayToken
+                    )
+                }
+            }
             .onChange(of: settingsStore.settings.ttsProvider) {
                 reconfigureServices()
             }
