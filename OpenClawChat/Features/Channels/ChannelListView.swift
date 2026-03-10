@@ -3,6 +3,7 @@ import SwiftUI
 struct ChannelListView: View {
     @Bindable var channelStore: ChannelStore
     var settingsStore: SettingsStore
+    var gatewayConnection: GatewayConnection
     var onSelect: (Channel) -> Void
 
     @State private var showAddChannel = false
@@ -82,7 +83,7 @@ struct ChannelListView: View {
                 }
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView(store: settingsStore)
+                SettingsView(store: settingsStore, gatewayConnection: gatewayConnection)
             }
             .sheet(isPresented: $showAddChannel) {
                 AddChannelView(channelStore: channelStore, settings: settingsStore)

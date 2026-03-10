@@ -147,14 +147,58 @@ curl -X POST https://your-gateway-url/v1/chat/completions \
   -d '{"model":"openclaw:main","messages":[{"role":"user","content":"Hello!"}],"stream":false}'
 ```
 
+### WebSocket Mode (optional)
+
+ClawTalk defaults to HTTP, which works out of the box. WebSocket mode is an optional upgrade that adds:
+
+- **Model selection** — browse and pick from all models configured on your gateway
+- **Chat abort** — cancel in-progress agent responses
+- **Real-time events** — lower-latency streaming via push events
+
+WebSocket mode does **not** currently support model name display or token usage in responses (these are gateway-side limitations).
+
+#### Enabling WebSocket
+
+1. Enable WebSocket Mode in **Settings → OpenClaw Gateway**
+2. Set the **WS Port or Path**:
+   - **Tunneled connections** (Cloudflare, ngrok): Enter a path, e.g. `/ws`
+   - **Local/Tailscale connections**: Enter the WebSocket port, e.g. `18789`
+
+#### Device pairing (remote connections only)
+
+When connecting via WebSocket over the internet (Cloudflare Tunnel, public URL), your device must be approved on the gateway before it can connect. Local and Tailscale connections auto-approve.
+
+1. Open ClawTalk and enable WebSocket mode — the app will attempt to connect
+2. On your gateway machine, list pending devices:
+
+```bash
+openclaw devices list
+```
+
+You should see your device with status `pending`. Pairing requests expire after **5 minutes**.
+
+3. Approve the device:
+
+```bash
+openclaw devices approve <device-id>
+```
+
+4. ClawTalk will automatically reconnect once approved. You only need to do this once per device.
+
+If the connection fails with a timeout, double-check:
+- Your gateway URL is correct
+- The WS path matches your tunnel config (e.g., `/ws` for Cloudflare)
+- The device pairing was approved before the 5-minute expiry
+
 ## App Configuration
 
-On first launch:
+On first launch, the onboarding wizard walks you through gateway setup and voice configuration. Everything can be changed later in Settings.
 
 1. **Settings → OpenClaw Gateway**
    - **URL**: Your gateway URL (e.g., `https://openclaw.yourdomain.com`)
    - **Token**: Your gateway token
    - **API Mode**: Chat Completions (default) or Open Responses
+   - **WebSocket Mode**: Off by default. Enable for model selection and chat abort.
 
 2. **Settings → Text-to-Speech** (optional)
    - **ElevenLabs**: Best quality. Enter your API key and voice ID.
@@ -169,7 +213,7 @@ On first launch:
    - Toggle voice input and output independently for text-only mode.
 
 5. **Settings → Display**
-   - Toggle token usage display under assistant messages (requires Open Responses API).
+   - Toggle token usage display under assistant messages (requires Open Responses API, HTTP mode only).
 
 ## Tools Dashboard
 
@@ -337,11 +381,24 @@ Without this, you can still type any agent ID manually in the text field below t
 
 ### Sessions list doesn't show ClawTalk sessions
 
-This is a known limitation. The gateway HTTP API (`/v1/chat/completions`, `/v1/responses`) does **not persist sessions** between requests. Only auto-reply channel flows (Telegram, Discord, etc.) persist sessions to disk. ClawTalk sends full conversation history with each request as a workaround. See [docs/TODO.md](docs/TODO.md) for the planned gateway PR to fix this.
+This is a known limitation for both HTTP and WebSocket modes. The gateway's `chat.send` (WebSocket) and HTTP API endpoints do **not persist sessions** to the session store. Only auto-reply channel flows (Telegram, Discord, etc.) call `resolveSessionStoreEntry()` to persist sessions. ClawTalk sends full conversation history with each HTTP request as a workaround. See [docs/TODO.md](docs/TODO.md) for the planned gateway PR to fix this.
 
 ### Agent doesn't have personality / doesn't know its name
 
-Related to the session limitation above. Without server-side session persistence, the agent doesn't get its `SOUL.md` system prompt injected. The agent responds as a generic assistant. A gateway PR is needed to enable HTTP session persistence.
+SOUL.md is loaded at the agent level, not per-session. The agent's personality should work in both HTTP and WebSocket modes. If the agent responds as a generic assistant, check that the agent has a `workspace` configured with a `SOUL.md` file.
+
+### WebSocket won't connect (remote)
+
+Remote WebSocket connections require **device pairing**. See [WebSocket Mode → Device pairing](#device-pairing-remote-connections-only) above. Common issues:
+
+- **Challenge timeout**: Wrong WS path. Use `/ws` for Cloudflare tunnels, `18789` for local connections.
+- **"pairing required" error**: Device not approved. Run `openclaw devices list` and `openclaw devices approve <id>`.
+- **Pairing request expired**: Requests expire after 5 minutes. Toggle WebSocket off/on in Settings to trigger a new request, then approve quickly.
+- **Client ID rejected**: ClawTalk uses client ID `openclaw-ios`. If you see a schema validation error, ensure your gateway is up to date.
+
+### WebSocket doesn't show model name or token usage
+
+This is a gateway-side limitation. WebSocket chat events include message content and stop reason, but do **not** include the model name or token usage data. These are only available via HTTP (Chat Completions includes model name; Open Responses includes both model name and token counts). Token usage display is automatically disabled when WebSocket mode is enabled.
 
 ### Config changes not taking effect
 

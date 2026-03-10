@@ -27,10 +27,10 @@ final class GatewayConnection {
     // MARK: - Connection Lifecycle
 
     /// Connect to the gateway WebSocket.
-    func connect(gatewayURL: String, token: String, port: Int = 18789) async {
-        // Derive WebSocket URL from gateway HTTPS URL
-        guard let wsURL = Self.webSocketURL(from: gatewayURL, port: port) else {
-            lastError = "Invalid gateway URL for WebSocket"
+    /// - Parameter resolvedURL: Full WebSocket URL (e.g. wss://host/ws or ws://host:18789).
+    func connect(resolvedURL: String, token: String) async {
+        guard let wsURL = URL(string: resolvedURL) else {
+            lastError = "Invalid WebSocket URL: \(resolvedURL)"
             return
         }
 
@@ -78,21 +78,34 @@ final class GatewayConnection {
     // MARK: - Chat
 
     /// Send a chat message via WebSocket. Returns the runId for tracking events.
+    /// - Parameter images: Optional array of JPEG image data sent as base64 attachments.
     func chatSend(
         sessionKey: String,
         message: String,
+        images: [Data]? = nil,
         idempotencyKey: String = UUID().uuidString,
         timeoutMs: Int = 30000
     ) async throws -> ChatSendResponse {
         guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
 
-        let params: [String: AnyCodable] = [
+        var params: [String: AnyCodable] = [
             "sessionKey": AnyCodable(sessionKey),
             "message": AnyCodable(message),
             "thinking": AnyCodable(""),
             "idempotencyKey": AnyCodable(idempotencyKey),
             "timeoutMs": AnyCodable(timeoutMs),
         ]
+
+        if let images, !images.isEmpty {
+            let attachments: [[String: AnyCodable]] = images.map { data in
+                [
+                    "type": AnyCodable("image"),
+                    "mimeType": AnyCodable("image/jpeg"),
+                    "content": AnyCodable(data.base64EncodedString()),
+                ]
+            }
+            params["attachments"] = AnyCodable(attachments.map { AnyCodable($0) })
+        }
 
         return try await gw.requestDecoded(
             method: "chat.send",
@@ -147,6 +160,15 @@ final class GatewayConnection {
         eventContinuations.removeValue(forKey: id)
     }
 
+    // MARK: - Models
+
+    /// Fetch available models via WebSocket RPC.
+    func modelsList() async throws -> [ModelEntry] {
+        guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
+        let response: ModelsListResponse = try await gw.requestDecoded(method: "models.list")
+        return response.models
+    }
+
     // MARK: - RPC Convenience
 
     /// Make a raw RPC request.
@@ -193,22 +215,6 @@ final class GatewayConnection {
         connectionState = newState
     }
 
-    // MARK: - URL Helpers
-
-    /// Convert gateway URL to WebSocket URL.
-    /// Uses `wss://` for HTTPS gateways, `ws://` for HTTP (local network).
-    static func webSocketURL(from gatewayURL: String, port: Int = 18789) -> URL? {
-        let trimmed = gatewayURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        guard var components = URLComponents(string: trimmed) else { return nil }
-
-        // Match WebSocket scheme to HTTP scheme
-        let sourceScheme = components.scheme?.lowercased() ?? "https"
-        components.scheme = (sourceScheme == "http") ? "ws" : "wss"
-        components.port = port
-        components.path = ""
-
-        return components.url
-    }
 }
 
 // MARK: - Chat Event Types

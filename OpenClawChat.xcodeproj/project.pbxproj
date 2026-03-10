@@ -24,6 +24,7 @@
 		42C8880CFFC300285CBA6E2A /* SessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56943669DFCF69496BBD0394 /* SessionsView.swift */; };
 		448036DAFC2377BCBD84DB63 /* ConversationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A4A00DFCC8D4D5D3EDA52CE /* ConversationStore.swift */; };
 		503F9884CCC1ABD748CBD35C /* ToolsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6BE9171ECBD252B2E471971 /* ToolsViewModel.swift */; };
+		5106D5D1CA3586C8193D5224 /* OnboardingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC1C02A0FCCE9B67F47D7FE0 /* OnboardingTests.swift */; };
 		512B6173FBCDB3096B3DF33F /* AudioCaptureManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7FE120A90E02017D1855EE1 /* AudioCaptureManager.swift */; };
 		59F634A0DE7A749B88C80EAB /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23714CCE316F458DAD6FD5E9 /* MemoryDetailView.swift */; };
 		5B314631C5CCE3A36DC54996 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 3B252E6C27CE15D14486E75B /* MarkdownUI */; };
@@ -132,6 +133,7 @@
 		DA34147109FAE01E6BDD23D6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		E65B30697BD1D37C84AC2418 /* BrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserView.swift; sourceTree = "<group>"; };
 		EA2D4B52FED9396202EFD169 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		EC1C02A0FCCE9B67F47D7FE0 /* OnboardingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingTests.swift; sourceTree = "<group>"; };
 		ED86A6E968730439A99EC4DE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F10A92D7D54C1006B1CF4CE0 /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
 		F163754416ED9D32F261A9AA /* AnyCodable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnyCodable.swift; sourceTree = "<group>"; };
@@ -182,6 +184,7 @@
 			children = (
 				53F578F1633B0EC95D96AEB1 /* AppSettingsTests.swift */,
 				3FE6864862E4BB4698243ED6 /* MessageTests.swift */,
+				EC1C02A0FCCE9B67F47D7FE0 /* OnboardingTests.swift */,
 				9B51030C7F58133344774AF8 /* OpenClawClientTests.swift */,
 				82217B54B009AB34D0726817 /* OpenClawTypesTests.swift */,
 				4FDE6AF65D2222C8F71BBAEC /* OpenResponsesTypesTests.swift */,
@@ -484,6 +487,7 @@
 			files = (
 				18C97045C20E5A85769EB1AA /* AppSettingsTests.swift in Sources */,
 				8763DE5CB3314C6CF3AEBB76 /* MessageTests.swift in Sources */,
+				5106D5D1CA3586C8193D5224 /* OnboardingTests.swift in Sources */,
 				1B64D419E2A0B2432C6FF3C6 /* OpenClawClientTests.swift in Sources */,
 				A5C1BC92D2B08BD9F8DE3592 /* OpenClawTypesTests.swift in Sources */,
 				6C5104F9978DC8B6DD828588 /* OpenResponsesTypesTests.swift in Sources */,

@@ -86,26 +86,70 @@ What's built and working:
 
 ### Phase 3 — WebSocket & Real-Time
 
-- [ ] **WebSocket control plane**
-  - Protocol v3: `ws://gateway:18789`
-  - Lower latency than HTTP SSE for streaming
+- [x] **WebSocket control plane**
+  - Protocol v3: `ws://gateway:18789` or `wss://gateway/ws` (tunneled)
   - Bidirectional — can receive events (presence, approvals, status)
-  - Handshake:
-    1. Server sends `connect.challenge` with nonce
-    2. Client responds with `connect` (role, scopes, device identity + Ed25519 signature)
-    3. Server responds with `hello-ok` + device token
-  - Frame types: `req` (request), `res` (response), `event` (push)
-  - Key methods: `status`, `channels.list`, `nodes.list`, `chat.stream`, `memory.search`, `tools.catalog`
-  - Operator scopes: `operator.read`, `operator.write`, `operator.admin`, `operator.approvals`
-  - Requires Ed25519 keypair generation + stable device identity
-  - Reference: `src/gateway/server/ws-connection.ts`
-  - Docs: `docs/gateway/protocol.md`
+  - Handshake: challenge → connect (Ed25519 signature) → hello-ok
+  - `chat.send`, `chat.history`, `chat.abort` implemented
+  - Device identity persistence, auto-connect on channel select
+  - **Default mode is HTTP** — WebSocket is opt-in via Settings
+  - Device pairing required for remote WebSocket connections (`openclaw devices approve`)
+
+- [x] **WebSocket image support**
+  - `chat.send` accepts `attachments` array with base64 image data
+  - Format: `{type: "image", mimeType: "image/jpeg", content: "<base64>"}`
+  - Max 5MB per attachment
+  - No longer falls back to HTTP for image messages
+
+- [x] **Model selection** (WebSocket-only)
+  - Fetch models from `models.list` RPC over WebSocket (no HTTP `/v1/models` endpoint)
+  - Per-channel model picker (model picker sheet from chat input)
+  - Per-message model selector (CPU icon in chat input bar)
+  - Both change the same channel-level `selectedModel` setting
+  - Default uses agent routing (`openclaw:<agentId>`)
+
+- [x] **Display model in responses**
+  - Parse `model` field from Chat Completions chunks and Open Responses `response.completed`
+  - Show model name under assistant message bubble alongside token usage
+  - **Note:** WebSocket chat events do NOT include model name — HTTP only
+
+#### WebSocket vs HTTP — Known Gaps (Gateway-side)
+
+These are limitations in the OpenClaw gateway, not ClawTalk. Documented here for upstream fixes.
+
+| Feature | HTTP | WebSocket | Notes |
+|---------|------|-----------|-------|
+| Chat streaming | SSE | Push events | Both work |
+| Images | Yes | Yes | WS uses `attachments` param |
+| Model name in response | Yes | **No** | Not in chat events |
+| Token usage | Yes (Open Responses) | **No** | Schema has `usage` field but never populated |
+| Models list | **No** | Yes | No HTTP `/v1/models` endpoint |
+| Chat abort | **No** | Yes | `chat.abort` RPC |
+| Session persistence | **No** | **No** | WS `chat.send` creates transcripts but not session store entries |
+| Device pairing | Not required | Required | Remote WS needs `openclaw devices approve` |
+
+**Session persistence detail:** WebSocket `chat.send` calls `loadSessionEntry()` but never `resolveSessionStoreEntry()`. Telegram/Discord handlers DO call `resolveSessionStoreEntry()` which is why their sessions appear in `sessions_list`. A gateway PR to add `resolveSessionStoreEntry()` to `chat.send` would give ClawTalk persistent sessions.
+
+**Key gateway source files for upstream fixes:**
+- `src/gateway/server-methods/chat.ts` (lines 843-1247) — chat.send handler
+- `src/gateway/server-chat.ts` (lines 341-477) — chat event emission (add model/usage here)
+- `src/gateway/protocol/schema/logs-chat.ts` (lines 64-81) — chat event schema
+- `src/config/sessions/store.ts` (lines 115-154) — session store persistence
 
 - [ ] **Real-time events via WebSocket**
-  - Agent status changes
-  - Exec approval requests (agent wants to run a command, user approves from phone)
-  - Node capability invocations
+  - Agent status changes (push events)
   - Presence/heartbeat
+
+- [ ] **Exec approvals from phone** (WebSocket unlocked)
+  - Agent requests permission to run a command
+  - Push notification / in-app approval dialog
+  - User approves or denies from ClawTalk
+  - Requires `operator.approvals` scope
+
+- [ ] **Memory/tools via WebSocket RPC**
+  - Route `memory.search`, `tools.catalog` through WebSocket instead of HTTP `/tools/invoke`
+  - Lower latency, reuses existing connection
+  - Fallback to HTTP when WebSocket unavailable
 
 ### Phase 4 — Node Mode (Device as Agent Peripheral)
 
@@ -140,36 +184,37 @@ What's built and working:
 
 ### Phase 5 — Pre-Release Polish
 
-- [ ] **Onboarding flow**
-  - First-launch setup wizard
-  - Gateway URL + token entry
-  - Connection test with friendly error messages
-  - WhisperKit model download
-  - Quick test message to verify everything works
+- [x] **Onboarding flow**
+  - 5-step wizard: welcome, gateway setup guide, gateway config, connection test, voice setup
+  - Link to OpenClaw docs for gateway configuration
+  - Connection test with error classification (auth/network/SSL)
+  - Auto-skip for existing configured users
 
-- [ ] **Haptic feedback**
-  - Talk button press/release haptics
-  - Message send confirmation
+- [x] **Haptic feedback**
+  - Talk button: medium on press, heavy on hold threshold, light on release
+  - Send button: light impact on tap
+  - Success/error notification haptics on message completion
+  - Configurable via "Haptic Feedback" toggle in Settings
 
-- [ ] **Better error recovery**
-  - Clear error messages when gateway is unreachable
-  - Distinguish auth errors (wrong token) from network errors (can't reach server)
-  - Retry button on failed messages
-  - Connection status indicator
+- [x] **Better error recovery**
+  - Error classification: auth (401/403), network (timeout/unreachable), server (5xx), agent errors
+  - Retry button on failed user messages
+  - User-friendly error messages
+  - Allow HTTP for local/private network addresses
+
+- [ ] **Connection status indicator**
+  - Show green/yellow/red dot for WebSocket connection state
+  - Branch `feature/connection-status-dot` has partial work
+  - Needs investigation: @Observable state updates from WS callbacks not reaching UI
 
 - [ ] **Channel editing**
   - Rename existing channels
   - Change agent on existing channels
   - Reorder channels
 
-- [ ] **Message retry**
-  - Tap to retry failed messages
-  - Long-press context menu on messages (copy, retry, delete)
-
-- [ ] **Model selection** (branch: `feature/model-selection`)
-  - Fetch models from `models.list` RPC (requires WebSocket)
-  - Picker in Settings or per-channel
-  - Currently shelved — endpoint is WebSocket RPC, not HTTP
+- [ ] **Long-press context menu on messages**
+  - Copy message text
+  - Delete individual messages
 
 ---
 

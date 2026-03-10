@@ -35,6 +35,7 @@ struct OpenClawChatApp: App {
                     ChannelListView(
                         channelStore: channelStore,
                         settingsStore: settingsStore,
+                        gatewayConnection: gatewayConnection,
                         onSelect: { channel in
                             selectChannel(channel)
                         }
@@ -79,9 +80,8 @@ struct OpenClawChatApp: App {
             Task {
                 if gatewayConnection.connectionState == .disconnected {
                     await gatewayConnection.connect(
-                        gatewayURL: settingsStore.settings.gatewayURL,
-                        token: settingsStore.gatewayToken,
-                        port: settingsStore.settings.webSocketPort
+                        resolvedURL: settingsStore.settings.resolvedWebSocketURL,
+                        token: settingsStore.gatewayToken
                     )
                 }
                 vm.loadServerHistory()

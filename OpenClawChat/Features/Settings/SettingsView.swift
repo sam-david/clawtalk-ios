@@ -2,7 +2,17 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var store: SettingsStore
+    var gatewayConnection: GatewayConnection
     @Environment(\.dismiss) private var dismiss
+
+    @State private var connectionTestState: ConnectionTestState = .idle
+
+    enum ConnectionTestState: Equatable {
+        case idle
+        case testing
+        case success
+        case failed(String)
+    }
 
     var body: some View {
         NavigationStack {
@@ -41,32 +51,136 @@ struct SettingsView: View {
             SecureField("Gateway Token", text: $store.gatewayToken)
                 .textContentType(.password)
 
-            Picker("API Mode", selection: $store.settings.agentAPIMode) {
-                ForEach(AgentAPIMode.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
+            if !store.settings.useWebSocket {
+                Picker("API Mode", selection: $store.settings.agentAPIMode) {
+                    ForEach(AgentAPIMode.allCases) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
                 }
             }
 
             Toggle("WebSocket Mode", isOn: $store.settings.useWebSocket)
+                .onChange(of: store.settings.useWebSocket) { _, newValue in
+                    if newValue {
+                        store.settings.showTokenUsage = false
+                        // Auto-connect when toggled on
+                        if store.isConfigured {
+                            store.save()
+                            Task {
+                                await gatewayConnection.connect(
+                                    resolvedURL: store.settings.resolvedWebSocketURL,
+                                    token: store.gatewayToken
+                                )
+                            }
+                        }
+                    } else {
+                        // Disconnect when toggled off
+                        Task {
+                            await gatewayConnection.disconnect()
+                        }
+                    }
+                }
 
             if store.settings.useWebSocket {
                 HStack {
-                    Text("WebSocket Port")
+                    Text("WS Port or Path")
                     Spacer()
-                    TextField("18789", text: Binding(
-                        get: { String(store.settings.webSocketPort) },
-                        set: { store.settings.webSocketPort = Int($0) ?? 18789 }
-                    ))
-                        .keyboardType(.numberPad)
+                    TextField("/ws", text: $store.settings.webSocketPath)
+                        .keyboardType(.URL)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
                         .multilineTextAlignment(.trailing)
-                        .frame(width: 80)
+                        .frame(width: 120)
+                }
+            }
+
+            if store.settings.useWebSocket {
+                // Live WebSocket connection status
+                HStack {
+                    Text("Connection")
+                    Spacer()
+                    switch gatewayConnection.connectionState {
+                    case .connected:
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(.green)
+                                .frame(width: 8, height: 8)
+                            Text("Connected")
+                                .font(.subheadline)
+                                .foregroundStyle(.green)
+                        }
+                    case .connecting:
+                        HStack(spacing: 6) {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                            Text("Connecting...")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    case .disconnected:
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(.red)
+                                .frame(width: 8, height: 8)
+                            Text("Disconnected")
+                                .font(.subheadline)
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+
+                if gatewayConnection.connectionState == .disconnected {
+                    if let error = gatewayConnection.lastError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+
+                    Button("Reconnect") {
+                        store.save()
+                        Task {
+                            await gatewayConnection.connect(
+                                resolvedURL: store.settings.resolvedWebSocketURL,
+                                token: store.gatewayToken
+                            )
+                        }
+                    }
+                    .disabled(store.settings.gatewayURL.isEmpty || store.gatewayToken.isEmpty)
+                }
+            } else {
+                // HTTP connection test
+                Button(action: { testConnection() }) {
+                    HStack {
+                        Text("Test Connection")
+                        Spacer()
+                        switch connectionTestState {
+                        case .idle:
+                            EmptyView()
+                        case .testing:
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        case .success:
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        case .failed:
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.red)
+                        }
+                    }
+                }
+                .disabled(store.settings.gatewayURL.isEmpty || store.gatewayToken.isEmpty || connectionTestState == .testing)
+
+                if case .failed(let error) = connectionTestState {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
                 }
             }
         } header: {
             Text("OpenClaw Gateway")
         } footer: {
             if store.settings.useWebSocket {
-                Text("WebSocket mode connects to port 18789 for real-time streaming with full session management. The agent remembers context, can use tools, and writes to memory.")
+                Text("WebSocket enables real-time streaming. Enter a path (e.g. /ws) for tunneled gateways or a port (e.g. 18789) for local connections.")
             } else {
                 switch store.settings.agentAPIMode {
                 case .chatCompletions:
@@ -83,10 +197,15 @@ struct SettingsView: View {
     private var displaySection: some View {
         Section {
             Toggle("Show Token Usage", isOn: $store.settings.showTokenUsage)
+                .disabled(store.settings.useWebSocket)
         } header: {
             Text("Display")
         } footer: {
-            Text("Show input/output token counts under assistant messages. Requires Open Responses API mode.")
+            if store.settings.useWebSocket {
+                Text("Token usage is not available in WebSocket mode. Disable WebSocket to see token counts.")
+            } else {
+                Text("Show input/output token counts under assistant messages. Requires Open Responses API mode.")
+            }
         }
     }
 
@@ -210,6 +329,64 @@ struct SettingsView: View {
             Text("Data")
         } footer: {
             Text("Chat history is stored locally on this device with iOS Data Protection (encrypted at rest).")
+        }
+    }
+
+    // MARK: - Connection Test
+
+    private func testConnection() {
+        // Save current values before testing
+        store.save()
+        connectionTestState = .testing
+
+        Task {
+            do {
+                let baseURL = store.settings.gatewayURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+                guard let url = URL(string: "\(baseURL)/v1/chat/completions") else {
+                    connectionTestState = .failed("Invalid gateway URL")
+                    return
+                }
+
+                // POST with empty messages — validates auth without triggering a real response.
+                // Valid token → 400 (bad request), invalid token → 401.
+                var request = URLRequest(url: url)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                request.setValue("Bearer \(store.gatewayToken)", forHTTPHeaderField: "Authorization")
+                request.httpBody = Data("{\"model\":\"openclaw:main\",\"messages\":[],\"stream\":false}".utf8)
+                request.timeoutInterval = 15
+
+                let (_, response) = try await URLSession.shared.data(for: request)
+
+                if let http = response as? HTTPURLResponse {
+                    switch http.statusCode {
+                    case 200...299, 400:
+                        // 400 = auth passed, just invalid request body (empty messages)
+                        connectionTestState = .success
+                    case 401, 403:
+                        connectionTestState = .failed("Authentication failed (HTTP \(http.statusCode)). Check your gateway token.")
+                    default:
+                        connectionTestState = .failed("Gateway returned HTTP \(http.statusCode)")
+                    }
+                } else {
+                    connectionTestState = .failed("Unexpected response")
+                }
+            } catch let error as URLError {
+                switch error.code {
+                case .notConnectedToInternet:
+                    connectionTestState = .failed("No internet connection")
+                case .timedOut:
+                    connectionTestState = .failed("Connection timed out. Check the URL and ensure the gateway is running.")
+                case .cannotFindHost, .cannotConnectToHost:
+                    connectionTestState = .failed("Cannot reach gateway. Check the URL.")
+                case .secureConnectionFailed:
+                    connectionTestState = .failed("SSL/TLS connection failed. Make sure the gateway uses HTTPS.")
+                default:
+                    connectionTestState = .failed(error.localizedDescription)
+                }
+            } catch {
+                connectionTestState = .failed(error.localizedDescription)
+            }
         }
     }
 

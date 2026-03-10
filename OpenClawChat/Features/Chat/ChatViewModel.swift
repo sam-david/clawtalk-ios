@@ -18,13 +18,15 @@ final class ChatViewModel {
     var state: ChatState = .idle
     var errorMessage: String?
     var isConversationMode = false
+    var availableModels: [ModelEntry] = []
+    var isLoadingModels = false
 
     var channel: Channel
     private let openClaw = OpenClawClient()
     private let audioCapture = AudioCaptureManager()
     private let audioPlayback = AudioPlaybackManager()
     private let conversationStore = ConversationStore.shared
-    private var settings: SettingsStore
+    private(set) var settings: SettingsStore
     private var channelStore: ChannelStore?
     private var gatewayConnection: GatewayConnection?
     private var transcriptionService: (any TranscriptionService)?
@@ -245,9 +247,9 @@ final class ChatViewModel {
             }
 
             if settings.settings.useWebSocket, let gateway = gatewayConnection,
-               gateway.connectionState == .connected, images == nil {
+               gateway.connectionState == .connected {
                 do {
-                    try await sendMessageViaWebSocket(content, gateway: gateway)
+                    try await sendMessageViaWebSocket(content, images: images, gateway: gateway)
                 } catch is CancellationError {
                     throw CancellationError()
                 } catch {
@@ -315,7 +317,7 @@ final class ChatViewModel {
 
     // MARK: - WebSocket Send Path
 
-    private func sendMessageViaWebSocket(_ content: String, gateway: GatewayConnection) async throws {
+    private func sendMessageViaWebSocket(_ content: String, images: [Data]? = nil, gateway: GatewayConnection) async throws {
         // Subscribe to chat events BEFORE sending to avoid missing any
         let (subId, eventStream) = gateway.subscribeChatEvents()
         currentEventSubId = subId
@@ -329,6 +331,7 @@ final class ChatViewModel {
         let response = try await gateway.chatSend(
             sessionKey: sessionKey,
             message: content,
+            images: images,
             idempotencyKey: idempotencyKey
         )
         let runId = response.runId
@@ -470,6 +473,11 @@ final class ChatViewModel {
                     }
                 }
 
+            case .modelIdentified(let model):
+                if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
+                    messages[idx].modelName = model
+                }
+
             case .completed(let tokenUsage, let responseId):
                 if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
                     messages[idx].tokenUsage = tokenUsage
@@ -555,6 +563,36 @@ final class ChatViewModel {
                 // Non-fatal — server may not have history for this session
             }
         }
+    }
+
+    // MARK: - Model Selection
+
+    /// Fetch available models from the gateway via WebSocket RPC.
+    /// The gateway does not expose an HTTP /v1/models endpoint — WebSocket is required.
+    func loadModels() {
+        guard !isLoadingModels else { return }
+        isLoadingModels = true
+
+        Task {
+            defer { isLoadingModels = false }
+
+            guard settings.settings.useWebSocket,
+                  let gateway = gatewayConnection,
+                  gateway.connectionState == .connected
+            else { return }
+
+            do {
+                availableModels = try await gateway.modelsList()
+            } catch {
+                // Non-fatal — model picker will just show "Default"
+            }
+        }
+    }
+
+    /// Update the channel's selected model and persist.
+    func updateModel(_ modelId: String?) {
+        channel.selectedModel = modelId
+        channelStore?.update(channel)
     }
 
     // MARK: - Lifecycle

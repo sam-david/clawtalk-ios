@@ -15,6 +15,9 @@ struct AppSettingsTests {
         #expect(settings.whisperModelSize == .small)
         #expect(settings.agentAPIMode == .openResponses)
         #expect(settings.showTokenUsage == false)
+        #expect(settings.useWebSocket == false)
+        #expect(settings.webSocketPath == "/ws")
+        #expect(settings.hapticsEnabled == true)
     }
 
     @Test("Settings are Codable")
@@ -82,5 +85,95 @@ struct AppSettingsTests {
             #expect(!mode.rawValue.isEmpty)
             #expect(!mode.id.isEmpty)
         }
+    }
+
+    // MARK: - WebSocket URL Resolution
+
+    @Test("WebSocket URL with path for tunneled gateways")
+    func wsURLPath() {
+        var settings = AppSettings.defaults
+        settings.gatewayURL = "https://openclaw.example.com"
+        settings.webSocketPath = "/ws"
+        #expect(settings.resolvedWebSocketURL == "wss://openclaw.example.com/ws")
+    }
+
+    @Test("WebSocket URL with path without leading slash")
+    func wsURLPathNoSlash() {
+        var settings = AppSettings.defaults
+        settings.gatewayURL = "https://openclaw.example.com"
+        settings.webSocketPath = "ws"
+        #expect(settings.resolvedWebSocketURL == "wss://openclaw.example.com/ws")
+    }
+
+    @Test("WebSocket URL with port for local connections")
+    func wsURLPort() {
+        var settings = AppSettings.defaults
+        settings.gatewayURL = "http://192.168.1.5"
+        settings.webSocketPath = "18789"
+        #expect(settings.resolvedWebSocketURL == "ws://192.168.1.5:18789")
+    }
+
+    @Test("WebSocket URL with colon-prefixed port")
+    func wsURLColonPort() {
+        var settings = AppSettings.defaults
+        settings.gatewayURL = "http://192.168.1.5"
+        settings.webSocketPath = ":18789"
+        #expect(settings.resolvedWebSocketURL == "ws://192.168.1.5:18789")
+    }
+
+    @Test("WebSocket URL with empty path defaults to port 18789")
+    func wsURLEmptyPath() {
+        var settings = AppSettings.defaults
+        settings.gatewayURL = "http://192.168.1.5"
+        settings.webSocketPath = ""
+        #expect(settings.resolvedWebSocketURL == "ws://192.168.1.5:18789")
+    }
+
+    @Test("WebSocket URL uses wss for https gateway")
+    func wsURLSchemeHttps() {
+        var settings = AppSettings.defaults
+        settings.gatewayURL = "https://example.com"
+        settings.webSocketPath = "/ws"
+        #expect(settings.resolvedWebSocketURL.hasPrefix("wss://"))
+    }
+
+    @Test("WebSocket URL uses ws for http gateway")
+    func wsURLSchemeHttp() {
+        var settings = AppSettings.defaults
+        settings.gatewayURL = "http://localhost"
+        settings.webSocketPath = "18789"
+        #expect(settings.resolvedWebSocketURL.hasPrefix("ws://"))
+    }
+
+    // MARK: - Legacy Migration
+
+    @Test("Legacy webSocketPort migrates to webSocketPath")
+    func legacyPortMigration() throws {
+        let legacyJSON = """
+        {
+            "gatewayURL": "https://example.com",
+            "ttsProvider": "OpenAI",
+            "elevenLabsVoiceID": "21m00Tcm4TlvDq8ikWAM",
+            "openAIVoice": "alloy",
+            "whisperModelSize": "small.en",
+            "voiceOutputEnabled": true,
+            "voiceInputEnabled": true,
+            "webSocketPort": 18789
+        }
+        """
+
+        let decoded = try JSONDecoder().decode(AppSettings.self, from: legacyJSON.data(using: .utf8)!)
+        #expect(decoded.webSocketPath == ":18789")
+    }
+
+    @Test("webSocketPort is not encoded (legacy only)")
+    func legacyPortNotEncoded() throws {
+        var settings = AppSettings.defaults
+        settings.webSocketPath = "/ws"
+
+        let data = try JSONEncoder().encode(settings)
+        let json = String(data: data, encoding: .utf8)!
+        #expect(!json.contains("webSocketPort"))
+        #expect(json.contains("webSocketPath"))
     }
 }
