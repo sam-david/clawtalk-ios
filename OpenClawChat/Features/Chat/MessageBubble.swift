@@ -123,7 +123,7 @@ struct MessageBubble: View {
                     .padding(.top, 8)
                     .padding(.bottom, 2)
             } else {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(spacing: 8) {
                     // Display any images attached to the assistant message
                     if message.hasImages, let images = message.imageData {
                         ForEach(Array(images.enumerated()), id: \.offset) { _, data in
@@ -159,6 +159,7 @@ struct MessageBubble: View {
                                 streamingCursor
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     } else if message.isStreaming {
                         streamingCursor
                     }

@@ -271,8 +271,7 @@ final class NodeConnection {
             // Inject images directly into chat
             let imageDataList = photos.compactMap { $0.imageBase64.flatMap { Data(base64Encoded: $0) } }
             if !imageDataList.isEmpty {
-                let caption = photos.map { "Photo: \($0.width)x\($0.height), \($0.creationDate ?? "unknown date")" }.joined(separator: "\n")
-                onImagesReceived?(imageDataList, caption)
+                onImagesReceived?(imageDataList, nil)
             }
             // Return metadata only (without base64) to avoid token overflow
             let metadata = photos.map {
@@ -299,7 +298,7 @@ final class NodeConnection {
             )
             // Inject image directly into chat
             if let imageData = Data(base64Encoded: result.imageBase64) {
-                onImagesReceived?([imageData], "Camera (\(result.camera)): \(result.width)x\(result.height)")
+                onImagesReceived?([imageData], nil)
             }
             // Return metadata only
             let metadata = CameraCapability.SnapResult(
