@@ -637,8 +637,7 @@ final class ChatViewModel {
 
     /// Inject images from a node capability directly into the chat.
     func injectImages(_ images: [Data], caption: String?) {
-        var message = Message(role: .assistant, content: caption ?? "", imageData: images)
-        message.modelName = "node"
+        let message = Message(role: .assistant, content: caption ?? "", imageData: images)
         messages.append(message)
         conversationStore.save(messages, channelId: channel.id)
     }
