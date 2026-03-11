@@ -31,7 +31,7 @@ enum PhotosCapability {
         return f
     }()
 
-    static func getLatest(count: Int = 5, includeImage: Bool = true, maxWidth: Int = 1024) async throws -> [PhotoResult] {
+    static func getLatest(count: Int = 5, includeImage: Bool = true, maxWidth: Int = 512) async throws -> [PhotoResult] {
         let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
         guard status == .authorized || status == .limited else {
             throw PhotosError.denied
@@ -68,7 +68,7 @@ enum PhotosCapability {
                         contentMode: .aspectFit,
                         options: requestOptions
                     ) { image, _ in
-                        if let image, let data = image.jpegData(compressionQuality: 0.8) {
+                        if let image, let data = image.jpegData(compressionQuality: 0.6) {
                             continuation.resume(returning: data.base64EncodedString())
                         } else {
                             continuation.resume(returning: nil as String?)

@@ -120,7 +120,8 @@ struct MessageBubble: View {
             if message.isStreaming && message.content.isEmpty {
                 // Waiting for response — show typing dots
                 TypingIndicator()
-                    .padding(.vertical, 4)
+                    .padding(.top, 8)
+                    .padding(.bottom, 2)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     // Display any images attached to the assistant message

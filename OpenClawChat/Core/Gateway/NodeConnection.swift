@@ -18,6 +18,10 @@ final class NodeConnection {
     private(set) var connectionState: State = .disconnected
     private(set) var lastError: String?
 
+    /// Callback to inject images directly into the active chat.
+    /// Set by the app when a ChatViewModel is active.
+    var onImagesReceived: (([Data], String?) -> Void)?
+
     private let logger = Logger(subsystem: "com.openclaw.clawtalk", category: "node-conn")
     private var gateway: GatewayWebSocket?
 
@@ -262,9 +266,26 @@ final class NodeConnection {
             let photos = try await PhotosCapability.getLatest(
                 count: params?.count ?? 5,
                 includeImage: params?.includeImage ?? true,
-                maxWidth: params?.maxWidth ?? 1024
+                maxWidth: params?.maxWidth ?? 512
             )
-            return try encodeJSON(photos)
+            // Inject images directly into chat
+            let imageDataList = photos.compactMap { $0.imageBase64.flatMap { Data(base64Encoded: $0) } }
+            if !imageDataList.isEmpty {
+                let caption = photos.map { "Photo: \($0.width)x\($0.height), \($0.creationDate ?? "unknown date")" }.joined(separator: "\n")
+                onImagesReceived?(imageDataList, caption)
+            }
+            // Return metadata only (without base64) to avoid token overflow
+            let metadata = photos.map {
+                PhotosCapability.PhotoResult(
+                    identifier: $0.identifier,
+                    creationDate: $0.creationDate,
+                    width: $0.width,
+                    height: $0.height,
+                    mediaType: $0.mediaType,
+                    imageBase64: nil
+                )
+            }
+            return try encodeJSON(metadata)
 
         // Camera
         case "camera.list":
@@ -276,7 +297,18 @@ final class NodeConnection {
                 quality: params?.quality ?? 0.8,
                 maxWidth: params?.maxWidth ?? 1920
             )
-            return try encodeJSON(result)
+            // Inject image directly into chat
+            if let imageData = Data(base64Encoded: result.imageBase64) {
+                onImagesReceived?([imageData], "Camera (\(result.camera)): \(result.width)x\(result.height)")
+            }
+            // Return metadata only
+            let metadata = CameraCapability.SnapResult(
+                imageBase64: "(displayed in app)",
+                width: result.width,
+                height: result.height,
+                camera: result.camera
+            )
+            return try encodeJSON(metadata)
 
         // Screen
         case "screen.snapshot":

@@ -635,6 +635,14 @@ final class ChatViewModel {
         conversationStore.save(messages, channelId: channel.id)
     }
 
+    /// Inject images from a node capability directly into the chat.
+    func injectImages(_ images: [Data], caption: String?) {
+        var message = Message(role: .assistant, content: caption ?? "", imageData: images)
+        message.modelName = "node"
+        messages.append(message)
+        conversationStore.save(messages, channelId: channel.id)
+    }
+
     // MARK: - Retry
 
     /// Retry sending a failed user message.

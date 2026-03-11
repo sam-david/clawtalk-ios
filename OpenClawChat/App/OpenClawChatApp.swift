@@ -105,6 +105,11 @@ struct OpenClawChatApp: App {
         chatViewModel = vm
         selectedChannel = channel
 
+        // Wire node image injection to chat
+        nodeConnection.onImagesReceived = { [weak vm] images, caption in
+            vm?.injectImages(images, caption: caption)
+        }
+
         // Auto-connect WebSocket if enabled, then load server history
         if settingsStore.settings.useWebSocket, settingsStore.isConfigured {
             Task {
@@ -129,6 +134,7 @@ struct OpenClawChatApp: App {
         chatViewModel?.stop()
         chatViewModel = nil
         selectedChannel = nil
+        nodeConnection.onImagesReceived = nil
     }
 
     private func deleteCurrentChannel() {
