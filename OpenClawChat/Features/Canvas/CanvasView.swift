@@ -43,20 +43,15 @@ private struct WebViewRepresentable: UIViewRepresentable {
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.isInspectable = true
 
-        // Register the webView with the canvas capability
-        canvas.webView = webView
-
-        if let url = canvas.currentURL, let parsedURL = URL(string: url) {
-            webView.load(URLRequest(url: parsedURL))
-        }
+        // Register and load any pending URL
+        canvas.webViewReady(webView)
 
         return webView
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
-        // Keep canvas reference updated
         if canvas.webView !== webView {
-            canvas.webView = webView
+            canvas.webViewReady(webView)
         }
     }
 

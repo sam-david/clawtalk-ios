@@ -37,6 +37,7 @@ final class CanvasCapability {
 
     /// The WKWebView is set by CanvasView when it appears.
     var webView: WKWebView?
+    private var pendingURL: URL?
 
     // MARK: - Singleton
 
@@ -46,15 +47,31 @@ final class CanvasCapability {
     // MARK: - Commands
 
     func present(url: String) async throws -> PresentResult {
-        guard let webView else { throw CanvasError.noWebView }
         guard let parsedURL = URL(string: url) else {
             throw CanvasError.evalFailed("Invalid URL: \(url)")
         }
 
         currentURL = url
+        pendingURL = parsedURL
         isPresented = true
-        webView.load(URLRequest(url: parsedURL))
+
+        // If webView already exists, load immediately
+        if let webView {
+            webView.load(URLRequest(url: parsedURL))
+            pendingURL = nil
+        }
+        // Otherwise, CanvasView will pick up pendingURL when it creates the webView
+
         return PresentResult(ok: true)
+    }
+
+    /// Called by CanvasView when the WKWebView is created.
+    func webViewReady(_ wv: WKWebView) {
+        webView = wv
+        if let url = pendingURL {
+            wv.load(URLRequest(url: url))
+            pendingURL = nil
+        }
     }
 
     func navigate(url: String) async throws -> PresentResult {

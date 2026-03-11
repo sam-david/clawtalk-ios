@@ -122,17 +122,92 @@ struct MessageBubble: View {
                 TypingIndicator()
                     .padding(.vertical, 4)
             } else {
-                HStack(alignment: .bottom, spacing: 0) {
-                    Markdown(message.content)
-                        .markdownTheme(.openClaw)
-                        .textSelection(.enabled)
+                VStack(alignment: .leading, spacing: 8) {
+                    // Display any images attached to the assistant message
+                    if message.hasImages, let images = message.imageData {
+                        ForEach(Array(images.enumerated()), id: \.offset) { _, data in
+                            if let uiImage = UIImage(data: data) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: 250, maxHeight: 250)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            }
+                        }
+                    }
 
-                    if message.isStreaming {
+                    // Extract and display any base64 images from markdown content
+                    let extracted = Self.extractBase64Images(from: message.content)
+                    ForEach(Array(extracted.images.enumerated()), id: \.offset) { _, data in
+                        if let uiImage = UIImage(data: data) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(maxWidth: 250, maxHeight: 250)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                    }
+
+                    if !extracted.text.isEmpty {
+                        HStack(alignment: .bottom, spacing: 0) {
+                            Markdown(extracted.text)
+                                .markdownTheme(.openClaw)
+                                .textSelection(.enabled)
+
+                            if message.isStreaming {
+                                streamingCursor
+                            }
+                        }
+                    } else if message.isStreaming {
                         streamingCursor
                     }
                 }
             }
         }
+    }
+
+    // MARK: - Base64 Image Extraction
+
+    struct ExtractedContent {
+        let text: String
+        let images: [Data]
+    }
+
+    static func extractBase64Images(from content: String) -> ExtractedContent {
+        // Match markdown images with base64 data URIs: ![...](data:image/...;base64,...)
+        let pattern = #"!\[[^\]]*\]\(data:image/[^;]+;base64,([A-Za-z0-9+/=\s]+)\)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return ExtractedContent(text: content, images: [])
+        }
+
+        let range = NSRange(content.startIndex..., in: content)
+        let matches = regex.matches(in: content, options: [], range: range)
+
+        guard !matches.isEmpty else {
+            return ExtractedContent(text: content, images: [])
+        }
+
+        var images: [Data] = []
+        var cleanedText = content
+
+        // Process matches in reverse to preserve indices
+        for match in matches.reversed() {
+            if match.numberOfRanges > 1,
+               let base64Range = Range(match.range(at: 1), in: content) {
+                let base64String = String(content[base64Range]).replacingOccurrences(of: "\\s", with: "", options: .regularExpression)
+                if let data = Data(base64Encoded: base64String) {
+                    images.insert(data, at: 0)
+                }
+            }
+            if let fullRange = Range(match.range, in: cleanedText) {
+                cleanedText.removeSubrange(fullRange)
+            }
+        }
+
+        return ExtractedContent(
+            text: cleanedText.trimmingCharacters(in: .whitespacesAndNewlines),
+            images: images
+        )
     }
 
     private var bubbleBackground: some ShapeStyle {
