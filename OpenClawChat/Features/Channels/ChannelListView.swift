@@ -61,6 +61,27 @@ struct ChannelListView: View {
                 .onMove { source, destination in
                     channelStore.move(from: source, to: destination)
                 }
+
+                Section {
+                    Button(action: { showAddChannel = true }) {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "plus")
+                                .font(.body)
+                                .fontWeight(.semibold)
+                            Text("New Channel")
+                                .font(.body)
+                                .fontWeight(.semibold)
+                            Spacer()
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.vertical, 16)
+                        .background(Color.openClawRed)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .listRowBackground(Color.clear)
+                }
+                .listSectionSpacing(.compact)
             }
             .overlay {
                 if channelStore.channels.isEmpty {
@@ -73,9 +94,6 @@ struct ChannelListView: View {
                         Text("No channels yet")
                             .font(.headline)
                             .foregroundStyle(.secondary)
-                        Text("Tap + to start a conversation")
-                            .font(.subheadline)
-                            .foregroundStyle(.tertiary)
                     }
                 }
             }
@@ -106,15 +124,9 @@ struct ChannelListView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 12) {
-                        Button(action: { showTools = true }) {
-                            Image(systemName: "wrench.and.screwdriver")
-                                .foregroundStyle(.openClawRed)
-                        }
-                        Button(action: { showAddChannel = true }) {
-                            Image(systemName: "plus")
-                                .foregroundStyle(.openClawRed)
-                        }
+                    Button(action: { showTools = true }) {
+                        Image(systemName: "square.grid.2x2")
+                            .foregroundStyle(.openClawRed)
                     }
                 }
             }
