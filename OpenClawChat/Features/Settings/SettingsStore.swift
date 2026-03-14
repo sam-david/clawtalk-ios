@@ -25,9 +25,8 @@ final class SettingsStore {
         !settings.gatewayURL.isEmpty && !gatewayToken.isEmpty
     }
 
-    var hasCompletedOnboarding: Bool {
-        get { defaults.bool(forKey: "has_completed_onboarding") }
-        set { defaults.set(newValue, forKey: "has_completed_onboarding") }
+    var hasCompletedOnboarding: Bool = false {
+        didSet { defaults.set(hasCompletedOnboarding, forKey: "has_completed_onboarding") }
     }
 
     init() {
@@ -38,6 +37,7 @@ final class SettingsStore {
         self.gatewayToken = secure.gatewayToken ?? ""
         self.elevenLabsAPIKey = secure.elevenLabsAPIKey ?? ""
         self.openAIAPIKey = secure.openAIAPIKey ?? ""
+        self.hasCompletedOnboarding = defaults.bool(forKey: "has_completed_onboarding")
 
         // Auto-skip onboarding for existing configured users
         if isConfigured && !hasCompletedOnboarding {

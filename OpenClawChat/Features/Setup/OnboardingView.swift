@@ -61,11 +61,10 @@ struct OnboardingView: View {
         VStack(spacing: 24) {
             Spacer()
 
-            Image("Logo")
+            Image("LogoRed")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 120, height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .frame(width: 160, height: 160)
 
             Text("Welcome to ClawTalk")
                 .font(.title)
@@ -114,7 +113,7 @@ struct OnboardingView: View {
             }
             .padding(.horizontal, 32)
 
-            Link(destination: URL(string: "https://openclaw.com/docs/gateway/configuration")!) {
+            Link(destination: URL(string: "https://docs.openclaw.ai/gateway")!) {
                 HStack(spacing: 6) {
                     Image(systemName: "book.fill")
                     Text("View Setup Guide")
