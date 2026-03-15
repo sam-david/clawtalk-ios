@@ -2,8 +2,8 @@ import SwiftUI
 
 @main
 struct OpenClawChatApp: App {
-    @State private var settingsStore = SettingsStore()
-    @State private var channelStore = ChannelStore()
+    @State private var settingsStore: SettingsStore
+    @State private var channelStore: ChannelStore
     @State private var selectedChannel: Channel?
     @State private var chatViewModel: ChatViewModel?
     @State private var showModelDownload = false
@@ -12,6 +12,14 @@ struct OpenClawChatApp: App {
     @State private var cachedSTTModelSize: WhisperModelSize?
     @State private var gatewayConnection = GatewayConnection()
     @State private var nodeConnection = NodeConnection()
+
+    init() {
+        #if DEBUG
+        DemoDataSeeder.seedIfNeeded()
+        #endif
+        _settingsStore = State(initialValue: SettingsStore())
+        _channelStore = State(initialValue: ChannelStore())
+    }
 
     var body: some Scene {
         WindowGroup {
