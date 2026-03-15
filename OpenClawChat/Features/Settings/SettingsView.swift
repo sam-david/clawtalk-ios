@@ -8,6 +8,9 @@ struct SettingsView: View {
     @State private var connectionTestState: ConnectionTestState = .idle
     @State private var elevenLabsVoices: [ElevenLabsVoice] = []
     @State private var voicesFetchState: FetchState = .idle
+    @State private var previewService: (any SpeechService)?
+    @State private var previewPlayback: AudioPlaybackManager?
+    @State private var isPreviewing = false
 
     enum ConnectionTestState: Equatable {
         case idle
@@ -280,6 +283,8 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                voicePreviewButton
             case .openai:
                 SecureField("API Key", text: $store.openAIAPIKey)
                     .textContentType(.password)
@@ -291,8 +296,10 @@ struct SettingsView: View {
                     Text("Nova").tag("nova")
                     Text("Shimmer").tag("shimmer")
                 }
+
+                voicePreviewButton
             case .apple:
-                EmptyView()
+                voicePreviewButton
             }
         } header: {
             Text("Text-to-Speech")
@@ -453,6 +460,92 @@ struct SettingsView: View {
             elevenLabsVoices = result.voices
             voicesFetchState = result.usedAPI ? .loaded : .loadedDefaults
         }
+    }
+
+    // MARK: - Voice Preview
+
+    private var voicePreviewButton: some View {
+        Button(action: { isPreviewing ? stopPreview() : startPreview() }) {
+            HStack {
+                Text(isPreviewing ? "Stop Preview" : "Preview Voice")
+                Spacer()
+                if isPreviewing {
+                    Image(systemName: "stop.circle.fill")
+                        .foregroundStyle(.openClawRed)
+                } else {
+                    Image(systemName: "play.circle.fill")
+                        .foregroundStyle(.openClawRed)
+                }
+            }
+        }
+        .disabled(previewDisabled)
+    }
+
+    private var previewDisabled: Bool {
+        switch store.settings.ttsProvider {
+        case .elevenlabs:
+            return store.elevenLabsAPIKey.isEmpty || store.settings.elevenLabsVoiceID.isEmpty
+        case .openai:
+            return store.openAIAPIKey.isEmpty
+        case .apple:
+            return false
+        }
+    }
+
+    private func startPreview() {
+        let sampleText = "Hello! This is a preview of your selected voice."
+
+        let tts: any SpeechService
+        switch store.settings.ttsProvider {
+        case .elevenlabs:
+            tts = ElevenLabsTTSService(voiceID: store.settings.elevenLabsVoiceID, apiKey: store.elevenLabsAPIKey)
+        case .openai:
+            tts = OpenAITTSService(voice: store.settings.openAIVoice, apiKey: store.openAIAPIKey)
+        case .apple:
+            tts = AppleTTSService()
+        }
+
+        previewService = tts
+        isPreviewing = true
+
+        if store.settings.ttsProvider == .apple {
+            // Apple TTS plays directly via AVSpeechSynthesizer
+            let _ = tts.streamSpeech(text: sampleText)
+            // Auto-reset after a delay since Apple TTS doesn't give us completion
+            Task {
+                try? await Task.sleep(for: .seconds(4))
+                if isPreviewing { isPreviewing = false }
+            }
+        } else {
+            // ElevenLabs/OpenAI stream PCM through playback manager
+            let playback = AudioPlaybackManager()
+            previewPlayback = playback
+
+            Task {
+                do {
+                    try playback.start()
+                    let audioStream = tts.streamSpeech(text: sampleText)
+                    for try await chunk in audioStream {
+                        playback.enqueue(pcmData: chunk)
+                    }
+                    playback.markStreamingDone()
+                    await playback.waitUntilFinished()
+                } catch {
+                    // Preview failed silently
+                }
+                playback.stop()
+                isPreviewing = false
+                previewPlayback = nil
+            }
+        }
+    }
+
+    private func stopPreview() {
+        previewService?.stop()
+        previewPlayback?.stop()
+        previewPlayback = nil
+        previewService = nil
+        isPreviewing = false
     }
 
     // MARK: - Security Info

@@ -92,14 +92,13 @@ struct MessageBubble: View {
     @ViewBuilder
     private var bubbleContent: some View {
         if isUser {
-            VStack(alignment: .trailing, spacing: 8) {
+            VStack(alignment: .leading, spacing: 8) {
                 if message.hasImages, let images = message.imageData {
                     ForEach(Array(images.enumerated()), id: \.offset) { _, data in
                         if let uiImage = UIImage(data: data) {
                             Image(uiImage: uiImage)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(maxWidth: 200, maxHeight: 200)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                     }

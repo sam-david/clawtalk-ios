@@ -32,6 +32,7 @@ final class ChatViewModel {
     private var recordingStart: Date?
     private var currentRunId: String?
     private var currentEventSubId: UUID?
+    private var ttsStopped = false
 
     /// Stable session key for this channel, used for server-side session management.
     var sessionKey: String {
@@ -236,6 +237,7 @@ final class ChatViewModel {
         let assistantMessage = Message(role: .assistant, content: "", isStreaming: true)
         messages.append(assistantMessage)
 
+        ttsStopped = false
         state = .thinking
 
         do {
@@ -370,15 +372,20 @@ final class ChatViewModel {
                     }
 
                     // Pipeline TTS
-                    if settings.settings.voiceOutputEnabled,
+                    if settings.settings.voiceOutputEnabled, !ttsStopped,
                        let tts = speechService,
                        let boundary = sentenceBuf.lastSentenceBoundary() {
                         let sentence = String(sentenceBuf.prefix(boundary))
                         sentenceBuf = String(sentenceBuf.dropFirst(boundary))
-                        let audioStream = tts.streamSpeech(text: sentence)
-                        for try await chunk in audioStream {
-                            try Task.checkCancellation()
-                            audioPlayback.enqueue(pcmData: chunk)
+                        do {
+                            let audioStream = tts.streamSpeech(text: sentence)
+                            for try await chunk in audioStream {
+                                guard !ttsStopped else { break }
+                                try Task.checkCancellation()
+                                audioPlayback.enqueue(pcmData: chunk)
+                            }
+                        } catch {
+                            if !ttsStopped { throw error }
                         }
                     }
                 }
@@ -412,8 +419,8 @@ final class ChatViewModel {
             messages[idx].isStreaming = false
         }
 
-        // Wait for audio
-        if settings.settings.voiceOutputEnabled {
+        // Wait for audio (skip if user stopped TTS)
+        if settings.settings.voiceOutputEnabled, !ttsStopped {
             audioPlayback.markStreamingDone()
             await audioPlayback.waitUntilFinished()
             audioPlayback.stop()
@@ -458,15 +465,20 @@ final class ChatViewModel {
                     messages[idx].content = fullResponse
                 }
 
-                if settings.settings.voiceOutputEnabled,
+                if settings.settings.voiceOutputEnabled, !ttsStopped,
                    let tts = speechService,
                    let boundary = sentenceBuf.lastSentenceBoundary() {
                     let sentence = String(sentenceBuf.prefix(boundary))
                     sentenceBuf = String(sentenceBuf.dropFirst(boundary))
-                    let audioStream = tts.streamSpeech(text: sentence)
-                    for try await chunk in audioStream {
-                        try Task.checkCancellation()
-                        audioPlayback.enqueue(pcmData: chunk)
+                    do {
+                        let audioStream = tts.streamSpeech(text: sentence)
+                        for try await chunk in audioStream {
+                            guard !ttsStopped else { break }
+                            try Task.checkCancellation()
+                            audioPlayback.enqueue(pcmData: chunk)
+                        }
+                    } catch {
+                        if !ttsStopped { throw error }
                     }
                 }
 
@@ -489,7 +501,7 @@ final class ChatViewModel {
             messages[idx].isStreaming = false
         }
 
-        if settings.settings.voiceOutputEnabled {
+        if settings.settings.voiceOutputEnabled, !ttsStopped {
             audioPlayback.markStreamingDone()
             await audioPlayback.waitUntilFinished()
             audioPlayback.stop()
@@ -499,13 +511,18 @@ final class ChatViewModel {
     // MARK: - TTS Helper
 
     private func flushRemainingTTS(_ sentenceBuf: String) async throws {
-        if settings.settings.voiceOutputEnabled,
+        if settings.settings.voiceOutputEnabled, !ttsStopped,
            let tts = speechService,
            !sentenceBuf.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            let audioStream = tts.streamSpeech(text: sentenceBuf)
-            for try await chunk in audioStream {
-                try Task.checkCancellation()
-                audioPlayback.enqueue(pcmData: chunk)
+            do {
+                let audioStream = tts.streamSpeech(text: sentenceBuf)
+                for try await chunk in audioStream {
+                    guard !ttsStopped else { break }
+                    try Task.checkCancellation()
+                    audioPlayback.enqueue(pcmData: chunk)
+                }
+            } catch {
+                if !ttsStopped { throw error }
             }
         }
     }
@@ -592,15 +609,12 @@ final class ChatViewModel {
     }
 
     func stopSpeaking() {
-        abortCurrentRun()
+        ttsStopped = true
         speechService?.stop()
         audioPlayback.stop()
-        if state == .speaking || state == .streaming {
-            sendTask?.cancel()
-            if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
-                messages[idx].isStreaming = false
-            }
-            state = .idle
+        if state == .speaking {
+            // Keep streaming text, just stop audio
+            state = .streaming
         }
     }
 

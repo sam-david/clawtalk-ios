@@ -102,12 +102,6 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 4) {
-                    if viewModel.messages.isEmpty {
-                        emptyState
-                            .frame(maxWidth: .infinity)
-                            .containerRelativeFrame(.vertical)
-                    }
-
                     ForEach(viewModel.messages) { message in
                         MessageBubble(
                             message: message,
@@ -122,6 +116,12 @@ struct ChatView: View {
             }
             .defaultScrollAnchor(.bottom)
             .scrollDismissesKeyboard(.interactively)
+            .scrollBounceBehavior(.basedOnSize)
+            .overlay {
+                if viewModel.messages.isEmpty {
+                    emptyState
+                }
+            }
             .onChange(of: viewModel.messages.last?.content) {
                 if let lastID = viewModel.messages.last?.id {
                     withAnimation(.easeOut(duration: 0.2)) {

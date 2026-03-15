@@ -46,8 +46,8 @@ struct AddChannelView: View {
                                             .fontWeight(.semibold)
                                     }
                                 }
+                                .contentShape(Rectangle())
                             }
-                            .buttonStyle(.plain)
                         }
                     } header: {
                         Text("Agent")

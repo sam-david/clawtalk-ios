@@ -17,7 +17,19 @@ enum AgentAPIMode: String, Codable, CaseIterable, Identifiable {
 
 enum WhisperModelSize: String, Codable, CaseIterable, Identifiable {
     case small = "small.en"
-    case largeTurbo = "large-v3-turbo"
+    case largeTurbo = "large-v3_turbo"
+
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        // Migrate old "large-v3-turbo" to "large-v3_turbo"
+        if raw == "large-v3-turbo" {
+            self = .largeTurbo
+        } else if let value = WhisperModelSize(rawValue: raw) {
+            self = value
+        } else {
+            self = .small
+        }
+    }
 
     var id: String { rawValue }
 

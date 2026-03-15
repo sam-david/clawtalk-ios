@@ -138,8 +138,8 @@ final class AudioCaptureManager {
 
     private func processVAD(_ bufferSamples: [Float], rms: Float) {
         if isListening {
-            // Ignore first 300ms after resuming (TTS tail audio)
-            if let start = listenStartTime, Date().timeIntervalSince(start) < 0.3 {
+            // Ignore first 800ms after resuming (TTS tail audio / echo)
+            if let start = listenStartTime, Date().timeIntervalSince(start) < 0.8 {
                 return
             }
 
