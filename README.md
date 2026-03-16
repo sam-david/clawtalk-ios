@@ -25,19 +25,11 @@
 - **Dark mode** — Designed for dark mode with OpenClaw lobster branding
 - **Security first** — All credentials in iOS Keychain, HTTPS enforced, on-device STT
 
-<!-- ## Screenshots -->
-<!-- Uncomment when screenshots are captured (see docs/DEMO_RECORDING_GUIDE.md) -->
-<!--
 <p align="center">
-  <img src="assets/screenshot-chat.png" width="250" alt="Text conversation">
-  <img src="assets/screenshot-voice.png" width="250" alt="Voice mode">
-  <img src="assets/screenshot-tools.png" width="250" alt="Tools dashboard">
+  <img src="assets/screenshot-channels.png" width="230" alt="Channel list">
+  <img src="assets/screenshot-chat1.png" width="230" alt="Chat conversation">
+  <img src="assets/screenshot-tools.png" width="230" alt="Tools dashboard">
 </p>
-<p align="center">
-  <img src="assets/screenshot-channels.png" width="250" alt="Channel list">
-  <img src="assets/screenshot-settings.png" width="250" alt="Settings">
-</p>
--->
 
 ## Install
 
