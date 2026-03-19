@@ -61,7 +61,7 @@ struct MessageBubble: View {
                         }
 
                         if !isUser, showTokenUsage, let usage = message.tokenUsage {
-                            Text("· \(usage.outputTokens) tokens")
+                            Text("· \(usage.inputTokens)→\(usage.outputTokens) tokens")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                         }
