@@ -439,7 +439,7 @@ final class ChatViewModel {
             model: channel.modelString,
             apiMode: settings.settings.agentAPIMode,
             sessionKey: sessionKey,
-            messageChannel: "clawtalk"
+            messageChannel: "webchat"
         )
 
         state = .streaming
