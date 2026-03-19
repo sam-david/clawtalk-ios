@@ -103,6 +103,7 @@ final class OpenClawClient {
                     }
 
                     var modelEmitted = false
+                    var lastUsage: TokenUsage?
                     for try await line in bytes.lines {
                         if Task.isCancelled { break }
 
@@ -124,9 +125,17 @@ final class OpenClawClient {
                         if let content = chunk.choices.first?.delta?.content {
                             continuation.yield(.textDelta(content))
                         }
+
+                        if let u = chunk.usage {
+                            lastUsage = TokenUsage(
+                                inputTokens: u.promptTokens ?? 0,
+                                outputTokens: u.completionTokens ?? 0,
+                                totalTokens: u.totalTokens ?? 0
+                            )
+                        }
                     }
 
-                    continuation.yield(.completed(tokenUsage: nil, responseId: nil))
+                    continuation.yield(.completed(tokenUsage: lastUsage, responseId: nil))
                     continuation.finish()
                 } catch {
                     continuation.finish(throwing: error)
