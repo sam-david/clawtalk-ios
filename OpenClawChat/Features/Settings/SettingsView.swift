@@ -74,7 +74,6 @@ struct SettingsView: View {
             Toggle("WebSocket Mode", isOn: $store.settings.useWebSocket)
                 .onChange(of: store.settings.useWebSocket) { _, newValue in
                     if newValue {
-                        store.settings.showTokenUsage = false
                         // Auto-connect when toggled on
                         if store.isConfigured {
                             store.save()
@@ -209,15 +208,10 @@ struct SettingsView: View {
     private var displaySection: some View {
         Section {
             Toggle("Show Token Usage", isOn: $store.settings.showTokenUsage)
-                .disabled(store.settings.useWebSocket)
         } header: {
             Text("Display")
         } footer: {
-            if store.settings.useWebSocket {
-                Text("Token usage is not available in WebSocket mode. Disable WebSocket to see token counts.")
-            } else {
-                Text("Show input/output token counts under assistant messages. Requires Open Responses API mode.")
-            }
+            Text("Show input/output token counts under assistant messages.")
         }
     }
 
