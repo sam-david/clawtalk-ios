@@ -525,7 +525,7 @@ final class OpenClawClient {
 
         let decoded = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
         return decoded.data.map { entry in
-            ModelEntry(id: entry.id, name: nil, provider: entry.ownedBy)
+            ModelEntry(id: entry.id, name: nil, provider: entry.ownedBy, contextWindow: nil, reasoning: nil)
         }
     }
 
