@@ -393,8 +393,18 @@ final class ChatViewModel {
             case "final":
                 if let text = event.message?.content?.first(where: { $0.type == "text" })?.text {
                     fullResponse = text
-                    if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
-                        messages[idx].content = fullResponse
+                }
+                if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
+                    messages[idx].content = fullResponse
+                    if let model = event.model {
+                        messages[idx].modelName = model
+                    }
+                    if let usage = event.usage {
+                        messages[idx].tokenUsage = TokenUsage(
+                            inputTokens: usage.input ?? 0,
+                            outputTokens: usage.output ?? 0,
+                            totalTokens: (usage.input ?? 0) + (usage.output ?? 0)
+                        )
                     }
                 }
                 break // Exit the for-await loop after processing final

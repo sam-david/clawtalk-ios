@@ -319,6 +319,15 @@ struct ChatEventPayload: Codable, Sendable {
     let message: ChatEventMessage?
     let errorMessage: String?
     let stopReason: String?
+    let model: String?
+    let usage: ChatEventUsage?
+}
+
+struct ChatEventUsage: Codable, Sendable {
+    let input: Int?
+    let output: Int?
+    let cacheRead: Int?
+    let cacheWrite: Int?
 }
 
 struct ChatEventMessage: Codable, Sendable {
