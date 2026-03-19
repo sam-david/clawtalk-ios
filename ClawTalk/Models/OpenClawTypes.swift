@@ -108,6 +108,23 @@ struct ModelsListResponse: Codable, Sendable {
     let models: [ModelEntry]
 }
 
+/// OpenAI-compatible GET /v1/models response.
+struct OpenAIModelsResponse: Decodable, Sendable {
+    let object: String  // "list"
+    let data: [OpenAIModelEntry]
+}
+
+struct OpenAIModelEntry: Decodable, Sendable {
+    let id: String
+    let object: String?  // "model"
+    let ownedBy: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, object
+        case ownedBy = "owned_by"
+    }
+}
+
 // MARK: - Chat Completions Response
 
 struct ChatCompletionResponse: Decodable {

@@ -63,11 +63,9 @@ struct SettingsView: View {
             SecureField("Gateway Token", text: $store.gatewayToken)
                 .textContentType(.password)
 
-            if !store.settings.useWebSocket {
-                Picker("API Mode", selection: $store.settings.agentAPIMode) {
-                    ForEach(AgentAPIMode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
-                    }
+            Picker("API Mode", selection: $store.settings.agentAPIMode) {
+                ForEach(AgentAPIMode.allCases) { mode in
+                    Text(mode.rawValue).tag(mode)
                 }
             }
 

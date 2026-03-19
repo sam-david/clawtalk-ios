@@ -502,6 +502,33 @@ final class OpenClawClient {
     }
 
 
+    /// Fetch available models via GET /v1/models (OpenAI-compatible format).
+    func fetchModels(gatewayURL: String, token: String) async throws -> [ModelEntry] {
+        let baseURL = gatewayURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard let url = URL(string: "\(baseURL)/v1/models") else {
+            throw OpenClawError.invalidURL
+        }
+        try requireSecureConnection(url)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 15
+
+        let (data, response) = try await session.data(for: request)
+
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+            throw OpenClawError.httpError(status)
+        }
+
+        let decoded = try JSONDecoder().decode(OpenAIModelsResponse.self, from: data)
+        return decoded.data.map { entry in
+            ModelEntry(id: entry.id, name: nil, provider: entry.ownedBy)
+        }
+    }
+
     /// Check if a URL is secure enough for API calls.
     /// HTTPS is required for public hosts. HTTP is allowed for local/private network addresses.
     func requireSecureConnection(_ url: URL) throws {

@@ -52,8 +52,7 @@ final class ToolsViewModel {
 
     func isAvailable(_ category: ToolCategory) -> Bool {
         if category == .models {
-            return settings.settings.useWebSocket
-                && gatewayConnection?.connectionState == .connected
+            return true  // HTTP /v1/models always available when gateway is configured
         }
         return toolAvailability[category] ?? true
     }
@@ -328,10 +327,22 @@ final class ToolsViewModel {
 
         defer { isLoadingModels = false }
 
+        // Try HTTP first — works regardless of WebSocket state.
+        do {
+            availableModels = try await client.fetchModels(
+                gatewayURL: gatewayURL,
+                token: token
+            )
+            return
+        } catch {
+            // Fall back to WebSocket RPC
+        }
+
+        // WebSocket fallback
         guard let gateway = gatewayConnection,
               gateway.connectionState == .connected
         else {
-            errorMessage = "WebSocket not connected"
+            errorMessage = "Could not load models"
             return
         }
 
