@@ -59,19 +59,19 @@ cd clawtalk-ios
 xcodegen generate
 ```
 
-This reads `project.yml` and generates `OpenClawChat.xcodeproj`. Run this again any time you add or remove source files.
+This reads `project.yml` and generates `ClawTalk.xcodeproj`. Run this again any time you add or remove source files.
 
 ### 3. Open and build
 
 ```bash
-open OpenClawChat.xcodeproj
+open ClawTalk.xcodeproj
 ```
 
 Or build from the command line:
 
 ```bash
-xcodebuild -project OpenClawChat.xcodeproj \
-  -scheme OpenClawChat \
+xcodebuild -project ClawTalk.xcodeproj \
+  -scheme ClawTalk \
   -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
   build
 ```
@@ -318,7 +318,7 @@ The agent's personality comes from `SOUL.md` in its workspace directory.
 ## Project Structure
 
 ```
-OpenClawChat/
+ClawTalk/
   App/            # Entry point, service wiring, theme
   Core/
     Agent/        # OpenClaw HTTP client (Chat Completions + Open Responses + Tools)

@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct OpenClawChatApp: App {
+struct ClawTalkApp: App {
     @State private var settingsStore: SettingsStore
     @State private var channelStore: ChannelStore
     @State private var selectedChannel: Channel?

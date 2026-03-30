@@ -1,4 +1,4 @@
-name: OpenClawChat
+name: ClawTalk
 options:
   bundleIdPrefix: com.openclaw
   deploymentTarget:
@@ -26,26 +26,26 @@ packages:
     from: "2.4.0"
 
 targets:
-  OpenClawChat:
+  ClawTalk:
     type: application
     platform: iOS
     sources:
-      - OpenClawChat
+      - ClawTalk
     resources:
-      - OpenClawChat/Resources
+      - ClawTalk/Resources
     dependencies:
       - package: WhisperKit
       - package: KeychainAccess
       - package: MarkdownUI
     settings:
       base:
-        INFOPLIST_FILE: OpenClawChat/Resources/Info.plist
+        INFOPLIST_FILE: ClawTalk/Resources/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_BUNDLE_IDENTIFIER: com.openclaw.clawtalk
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: 1
     info:
-      path: OpenClawChat/Resources/Info.plist
+      path: ClawTalk/Resources/Info.plist
       properties:
         CFBundleDisplayName: ClawTalk
         NSMicrophoneUsageDescription: "ClawTalk needs microphone access for voice input to your AI agent."
@@ -67,13 +67,13 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
 
-  OpenClawChatTests:
+  ClawTalkTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - OpenClawChatTests
+      - ClawTalkTests
     dependencies:
-      - target: OpenClawChat
+      - target: ClawTalk
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.openclaw.clawtalk.tests

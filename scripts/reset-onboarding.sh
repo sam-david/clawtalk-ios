@@ -4,8 +4,8 @@ set -e
 
 SIM="46F49878-3CFB-4F45-B4E4-BCF6F261CAE9"
 BUNDLE="com.openclaw.clawtalk"
-SCHEME="OpenClawChat"
-PROJECT="OpenClawChat.xcodeproj"
+SCHEME="ClawTalk"
+PROJECT="ClawTalk.xcodeproj"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 

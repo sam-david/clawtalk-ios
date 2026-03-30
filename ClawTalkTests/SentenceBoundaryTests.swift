@@ -1,5 +1,5 @@
 import Testing
-@testable import OpenClawChat
+@testable import ClawTalk
 
 @Suite("Sentence Boundary Detection")
 struct SentenceBoundaryTests {

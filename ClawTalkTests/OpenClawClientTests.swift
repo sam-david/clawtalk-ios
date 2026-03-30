@@ -1,5 +1,5 @@
 import Testing
-@testable import OpenClawChat
+@testable import ClawTalk
 
 @Suite("OpenClaw Client")
 struct OpenClawClientTests {
