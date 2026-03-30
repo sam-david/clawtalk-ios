@@ -1,4 +1,5 @@
 import Foundation
+import os.log
 
 final class ConversationStore {
     static let shared = ConversationStore()
@@ -54,9 +55,19 @@ final class ConversationStore {
     }
 
     func save(_ messages: [Message], channelId: UUID) {
-        let completed = messages.filter { !$0.isStreaming && !$0.content.isEmpty }
-        guard let data = try? encoder.encode(completed) else { return }
-        try? data.write(to: fileURL(for: channelId), options: [.atomic, .completeFileProtection])
+        let completed = messages.compactMap { msg -> Message? in
+            guard !msg.content.isEmpty else { return nil }
+            var m = msg
+            m.isStreaming = false
+            return m
+        }
+        do {
+            let data = try encoder.encode(completed)
+            try data.write(to: fileURL(for: channelId), options: [.atomic, .completeFileProtection])
+        } catch {
+            Logger(subsystem: "com.openclaw.clawtalk", category: "storage")
+                .error("Failed to save conversation \(channelId): \(error.localizedDescription)")
+        }
     }
 
     func clear(channelId: UUID) {

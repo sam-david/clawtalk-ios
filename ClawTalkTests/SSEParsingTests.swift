@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import OpenClawChat
+@testable import ClawTalk
 
 @Suite("SSE Parsing")
 struct SSEParsingTests {

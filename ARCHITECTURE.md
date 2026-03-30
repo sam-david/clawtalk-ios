@@ -146,9 +146,9 @@ The app enforces HTTPS-only connections.
 ### SwiftUI + @Observable (MVVM)
 
 ```
-OpenClawChat/
+ClawTalk/
   App/
-    OpenClawChatApp.swift          # App entry point, service wiring
+    ClawTalkApp.swift          # App entry point, service wiring
     ContentView.swift              # Stub (unused, required by xcodegen)
     Theme.swift                    # Brand colors (openClawRed), markdown theme
 

@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import OpenClawChat
+@testable import ClawTalk
 
 @Suite("Tool Types")
 struct ToolTypesTests {
