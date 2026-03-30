@@ -45,9 +45,7 @@ The following features are built on the ClawTalk side but waiting on upstream Op
 
 ## Install
 
-ClawTalk is currently under review for the App Store. Once approved, you'll be able to install it directly from there.
-
-In the meantime, you can build it from source — see below.
+ClawTalk is available on the [App Store](https://apps.apple.com/app/clawtalk/id6760325621) for $2.99 (one-time purchase), or you can build it from source for free — see below.
 
 ## Requirements
 
