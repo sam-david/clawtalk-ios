@@ -430,12 +430,23 @@ final class ChatViewModel {
     // MARK: - HTTP Send Path
 
     private func sendMessageViaHTTP(images: [Data]? = nil) async throws {
+        // Prefer cached device auth token from gateway, fall back to settings token.
+        let resolvedToken = OpenClawClient.resolveHTTPToken(
+            settingsToken: settings.gatewayToken,
+            gatewayURL: settings.settings.gatewayURL
+        )
+        try await streamHTTP(token: resolvedToken, images: images)
+    }
+
+    /// Drive the HTTP streaming loop with the given token.
+    /// On a 401, clears the stale device token and retries once with the settings token.
+    private func streamHTTP(token: String, images: [Data]?, isRetry: Bool = false) async throws {
         // Send full conversation history — the gateway HTTP API does not
         // persist sessions between requests, so each call needs full context.
         let eventStream = openClaw.stream(
             messages: messages.filter { !$0.isStreaming },
             gatewayURL: settings.settings.gatewayURL,
-            token: settings.gatewayToken,
+            token: token,
             model: channel.modelString,
             apiMode: settings.settings.agentAPIMode,
             sessionKey: sessionKey,
@@ -453,46 +464,73 @@ final class ChatViewModel {
             state = .speaking
         }
 
-        for try await event in eventStream {
-            try Task.checkCancellation()
+        do {
+            for try await event in eventStream {
+                try Task.checkCancellation()
 
-            switch event {
-            case .textDelta(let token):
-                fullResponse += token
-                sentenceBuf += token
+                switch event {
+                case .textDelta(let token):
+                    fullResponse += token
+                    sentenceBuf += token
 
-                if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
-                    messages[idx].content = fullResponse
-                }
+                    if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
+                        messages[idx].content = fullResponse
+                    }
 
-                if settings.settings.voiceOutputEnabled, !ttsStopped,
-                   let tts = speechService,
-                   let boundary = sentenceBuf.lastSentenceBoundary() {
-                    let sentence = String(sentenceBuf.prefix(boundary))
-                    sentenceBuf = String(sentenceBuf.dropFirst(boundary))
-                    do {
-                        let audioStream = tts.streamSpeech(text: sentence)
-                        for try await chunk in audioStream {
-                            guard !ttsStopped else { break }
-                            try Task.checkCancellation()
-                            audioPlayback.enqueue(pcmData: chunk)
+                    if settings.settings.voiceOutputEnabled, !ttsStopped,
+                       let tts = speechService,
+                       let boundary = sentenceBuf.lastSentenceBoundary() {
+                        let sentence = String(sentenceBuf.prefix(boundary))
+                        sentenceBuf = String(sentenceBuf.dropFirst(boundary))
+                        do {
+                            let audioStream = tts.streamSpeech(text: sentence)
+                            for try await chunk in audioStream {
+                                guard !ttsStopped else { break }
+                                try Task.checkCancellation()
+                                audioPlayback.enqueue(pcmData: chunk)
+                            }
+                        } catch {
+                            if !ttsStopped { throw error }
                         }
-                    } catch {
-                        if !ttsStopped { throw error }
+                    }
+
+                case .modelIdentified(let model):
+                    if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
+                        messages[idx].modelName = model
+                    }
+
+                case .completed(let tokenUsage, let responseId):
+                    if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
+                        messages[idx].tokenUsage = tokenUsage
+                        messages[idx].responseId = responseId
                     }
                 }
-
-            case .modelIdentified(let model):
-                if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
-                    messages[idx].modelName = model
-                }
-
-            case .completed(let tokenUsage, let responseId):
-                if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
-                    messages[idx].tokenUsage = tokenUsage
-                    messages[idx].responseId = responseId
-                }
             }
+        } catch let error as OpenClawError where !isRetry {
+            // On 401/403, clear stale device token and retry once with settings token
+            if case .httpErrorDetailed(let code, _, _) = error, code == 401 || code == 403 {
+                let identity = DeviceIdentityManager.loadOrCreate()
+                let host = URL(string: settings.settings.gatewayURL)?.host ?? settings.settings.gatewayURL
+                DeviceAuthTokenStore.clearToken(deviceId: identity.deviceId, role: "user", gatewayHost: host)
+                fullResponse = ""
+                if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
+                    messages[idx].content = ""
+                }
+                try await streamHTTP(token: settings.gatewayToken, images: images, isRetry: true)
+                return
+            }
+            if case .httpError(let code) = error, code == 401 || code == 403 {
+                let identity = DeviceIdentityManager.loadOrCreate()
+                let host = URL(string: settings.settings.gatewayURL)?.host ?? settings.settings.gatewayURL
+                DeviceAuthTokenStore.clearToken(deviceId: identity.deviceId, role: "user", gatewayHost: host)
+                fullResponse = ""
+                if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
+                    messages[idx].content = ""
+                }
+                try await streamHTTP(token: settings.gatewayToken, images: images, isRetry: true)
+                return
+            }
+            throw error
         }
 
         try await flushRemainingTTS(sentenceBuf)
@@ -568,8 +606,9 @@ final class ChatViewModel {
 
                 guard !converted.isEmpty else { return }
 
-                // Only replace if server has more/different messages
-                if converted.count > messages.count || messages.isEmpty {
+                // Only populate from server when local is empty — never
+                // overwrite local messages to prevent data loss.
+                if messages.isEmpty {
                     messages = converted
                     conversationStore.save(messages, channelId: channel.id)
                 }
@@ -593,10 +632,23 @@ final class ChatViewModel {
         channelStore?.update(channel)
     }
 
+    /// Save the current conversation state without modifying the live messages array.
+    func saveCurrentState() {
+        conversationStore.save(messages, channelId: channel.id)
+    }
+
     /// Stop all active audio and cancel any in-flight tasks.
     func stop() {
         abortCurrentRun()
         sendTask?.cancel()
+
+        // Finalize any in-progress streaming message before saving
+        if let idx = messages.lastIndex(where: { $0.role == .assistant && $0.isStreaming }) {
+            messages[idx].isStreaming = false
+            if messages[idx].content.isEmpty { messages.remove(at: idx) }
+        }
+        conversationStore.save(messages, channelId: channel.id)
+
         if isConversationMode {
             isConversationMode = false
             audioCapture.stopContinuousRecording()
@@ -711,7 +763,7 @@ enum ChatError: LocalizedError {
     var isRetryable: Bool {
         switch self {
         case .notConfigured: return false
-        case .authenticationFailed: return false
+        case .authenticationFailed: return true
         case .networkError, .serverError, .agentError: return true
         }
     }
@@ -723,7 +775,7 @@ enum ChatError: LocalizedError {
             case .httpError(let code), .httpErrorDetailed(let code, _, _):
                 switch code {
                 case 401, 403:
-                    return .authenticationFailed("Authentication failed (HTTP \(code)). Check your gateway token in Settings.")
+                    return .authenticationFailed("Authentication failed. Try again or check your gateway token in Settings.")
                 case 408, 429:
                     return .networkError("Request timed out or rate limited. Try again.")
                 case 400, 422:

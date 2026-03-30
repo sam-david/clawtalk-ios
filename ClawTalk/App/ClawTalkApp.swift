@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct ClawTalkApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var settingsStore: SettingsStore
     @State private var channelStore: ChannelStore
     @State private var selectedChannel: Channel?
@@ -98,6 +99,11 @@ struct ClawTalkApp: App {
             }
             .onChange(of: settingsStore.openAIAPIKey) {
                 reconfigureServices()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .background || newPhase == .inactive {
+                    chatViewModel?.saveCurrentState()
+                }
             }
         }
     }

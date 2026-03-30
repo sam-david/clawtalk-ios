@@ -564,3 +564,19 @@ enum OpenClawError: LocalizedError {
         }
     }
 }
+
+extension OpenClawClient {
+    /// Resolve the best available HTTP token: prefer a cached device auth
+    /// token from the gateway (issued during WebSocket handshake), fall back
+    /// to the user-provided settings token.
+    static func resolveHTTPToken(settingsToken: String, gatewayURL: String) -> String {
+        let identity = DeviceIdentityManager.loadOrCreate()
+        let host = URL(string: gatewayURL)?.host ?? gatewayURL
+        if let entry = DeviceAuthTokenStore.loadToken(
+            deviceId: identity.deviceId, role: "user", gatewayHost: host
+        ) {
+            return entry.token
+        }
+        return settingsToken
+    }
+}

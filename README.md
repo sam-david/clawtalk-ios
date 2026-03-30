@@ -12,6 +12,12 @@
   Push-to-talk or hands-free conversation mode with on-device speech recognition, streaming text responses with markdown rendering, text-to-speech output, image sending, and multi-agent channels — all over a secure HTTPS connection to your self-hosted OpenClaw gateway.
 </p>
 
+<p align="center">
+  <img src="assets/screenshot-channels.png" width="230" alt="Channel list">
+  <img src="assets/screenshot-chat1.png" width="230" alt="Chat conversation">
+  <img src="assets/screenshot-tools.png" width="230" alt="Tools dashboard">
+</p>
+
 ## Features
 
 - **Voice input** — Push-to-talk or hands-free conversation mode with Voice Activity Detection
@@ -36,12 +42,6 @@ The following features are built on the ClawTalk side but waiting on upstream Op
 - **WebSocket model name & token usage** — Display model and token counts in WebSocket mode (needs gateway to include model/usage in chat events)
 - **Memory & tools via WebSocket RPC** — Lower-latency tool access over the existing WebSocket connection (needs gateway RPC extensions)
 - **Cron message viewing** — View output from scheduled agent cron jobs (needs gateway cron session support)
-
-<p align="center">
-  <img src="assets/screenshot-channels.png" width="230" alt="Channel list">
-  <img src="assets/screenshot-chat1.png" width="230" alt="Chat conversation">
-  <img src="assets/screenshot-tools.png" width="230" alt="Tools dashboard">
-</p>
 
 ## Install
 
