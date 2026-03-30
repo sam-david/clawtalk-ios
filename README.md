@@ -25,6 +25,18 @@
 - **Dark mode** — Designed for dark mode with OpenClaw lobster branding
 - **Security first** — All credentials in iOS Keychain, HTTPS enforced, on-device STT
 
+## In Development
+
+The following features are built on the ClawTalk side but waiting on upstream OpenClaw gateway support:
+
+- **HTTP model selection** — Browse and switch models without WebSocket (needs `GET /v1/models` gateway endpoint)
+- **Server-side session persistence** — Sessions appear in the gateway session list with SOUL.md injection and memory writes (needs gateway to persist HTTP/WS sessions)
+- **File read in Tools dashboard** — Read files from the agent workspace via Tools (needs gateway to expose coding tools via `/tools/invoke`)
+- **Accurate input token reporting** — Full input/output token breakdown (needs gateway fix for `input_tokens` in Open Responses API)
+- **WebSocket model name & token usage** — Display model and token counts in WebSocket mode (needs gateway to include model/usage in chat events)
+- **Memory & tools via WebSocket RPC** — Lower-latency tool access over the existing WebSocket connection (needs gateway RPC extensions)
+- **Cron message viewing** — View output from scheduled agent cron jobs (needs gateway cron session support)
+
 <p align="center">
   <img src="assets/screenshot-channels.png" width="230" alt="Channel list">
   <img src="assets/screenshot-chat1.png" width="230" alt="Chat conversation">
