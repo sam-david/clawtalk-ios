@@ -40,8 +40,8 @@ struct ConversationStoreTests {
         #expect(loaded.isEmpty)
     }
 
-    @Test("Streaming messages are filtered out on save")
-    func filtersStreamingMessages() {
+    @Test("Streaming messages are saved with isStreaming reset to false")
+    func savesStreamingMessagesWithFlagReset() {
         let channelId = makeChannel()
         let messages = [
             Message(role: .user, content: "Hello"),
@@ -52,9 +52,11 @@ struct ConversationStoreTests {
         store.save(messages, channelId: channelId)
         let loaded = store.load(channelId: channelId)
 
-        #expect(loaded.count == 2)
+        #expect(loaded.count == 3)
         #expect(loaded[0].content == "Hello")
-        #expect(loaded[1].content == "Complete response")
+        #expect(loaded[1].content == "Partial...")
+        #expect(loaded[1].isStreaming == false)
+        #expect(loaded[2].content == "Complete response")
 
         store.clear(channelId: channelId)
     }
