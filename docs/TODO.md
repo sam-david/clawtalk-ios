@@ -40,11 +40,9 @@ What's built and working:
 - [x] **Direct tool invocation (`POST /tools/invoke`)**
 - [x] **Models list** (read-only, WebSocket-only, in Tools dashboard)
 
-- [ ] **Fix `input_tokens` reporting in Open Responses API**
-  - Gateway reports incorrect `input_tokens` in `response.completed` events
-  - `output_tokens` and `total_tokens` appear accurate
-  - Fix likely in `src/gateway/openresponses-http.ts`
-  - Once fixed, restore `input/output` token display in ClawTalk (currently output-only)
+- [x] **Fix `input_tokens` reporting in Open Responses API**
+  - Fixed gateway-side; ClawTalk now displays full `input→output` token breakdown
+  - Also now reads `usage` from Chat Completions streaming chunks (gateway PR #62986, 2026-04-11)
 
 - [ ] **File read in Tools dashboard** ⚠️ REQUIRES GATEWAY PR
   - `/tools/invoke` only exposes core OpenClaw tools — coding tools (`read`, `write`, `edit`, `exec`) are only available during full agent execution
@@ -57,9 +55,9 @@ What's built and working:
   - **Fix:** Call `updateSessionStore()` after HTTP/WS agent command execution
   - Key files: `src/gateway/openai-http.ts`, `src/gateway/openresponses-http.ts`, `src/gateway/server-methods/chat.ts`, `src/commands/agent.ts` (lines 737-752)
 
-- [ ] **HTTP models list** ⚠️ REQUIRES GATEWAY PR
-  - No HTTP `/v1/models` endpoint — only WebSocket `models.list` RPC
-  - **Fix:** Add `GET /v1/models` handler to gateway
+- [x] **HTTP models list**
+  - Gateway shipped `GET /v1/models` on 2026-03-24 (`src/gateway/models-http.ts`)
+  - ClawTalk fetches via HTTP and falls back to WebSocket RPC if it fails
 
 ### Phase 3 — WebSocket & Real-Time
 
