@@ -26,6 +26,7 @@ final class GatewayConnection {
     private let logger = Logger(subsystem: "com.openclaw.clawtalk", category: "gateway-conn")
     private var gateway: GatewayWebSocket?
     private var eventContinuations: [UUID: AsyncStream<ChatEventPayload>.Continuation] = [:]
+    private var talkEventContinuations: [UUID: AsyncStream<TalkEventPayload>.Continuation] = [:]
 
     // MARK: - Connection Lifecycle
 
@@ -163,6 +164,73 @@ final class GatewayConnection {
         eventContinuations.removeValue(forKey: id)
     }
 
+    // MARK: - Talk Session
+
+    /// Open a transcription-mode talk session. Audio frames go in via
+    /// `talkSessionAppendAudio`; transcripts come back as `talk.event`
+    /// notifications subscribed via `subscribeTalkEvents`.
+    func talkSessionCreate(
+        sessionKey: String? = nil,
+        provider: String? = nil,
+        model: String? = nil,
+        mode: TalkMode = .transcription,
+        transport: TalkTransport = .gatewayRelay,
+        brain: TalkBrain = .none,
+        ttlMs: Int? = nil
+    ) async throws -> TalkSessionCreateResult {
+        guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
+        var params: [String: AnyCodable] = [
+            "mode": AnyCodable(mode.rawValue),
+            "transport": AnyCodable(transport.rawValue),
+            "brain": AnyCodable(brain.rawValue),
+        ]
+        if let sessionKey { params["sessionKey"] = AnyCodable(sessionKey) }
+        if let provider { params["provider"] = AnyCodable(provider) }
+        if let model { params["model"] = AnyCodable(model) }
+        if let ttlMs { params["ttlMs"] = AnyCodable(ttlMs) }
+        return try await gw.requestDecoded(method: "talk.session.create", params: params)
+    }
+
+    /// Stream a chunk of base64-encoded PCM audio to an open talk session.
+    func talkSessionAppendAudio(sessionId: String, audioBase64: String, timestamp: Double? = nil) async throws {
+        guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
+        var params: [String: AnyCodable] = [
+            "sessionId": AnyCodable(sessionId),
+            "audioBase64": AnyCodable(audioBase64),
+        ]
+        if let timestamp { params["timestamp"] = AnyCodable(timestamp) }
+        _ = try await gw.request(method: "talk.session.appendAudio", params: params)
+    }
+
+    /// Close an open talk session.
+    func talkSessionClose(sessionId: String) async throws {
+        guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
+        _ = try await gw.request(
+            method: "talk.session.close",
+            params: ["sessionId": AnyCodable(sessionId)]
+        )
+    }
+
+    /// Subscribe to `talk.event` push notifications. Subscribe BEFORE
+    /// calling `talkSessionCreate` to avoid missing `session.ready`.
+    func subscribeTalkEvents() -> (id: UUID, stream: AsyncStream<TalkEventPayload>) {
+        let id = UUID()
+        let stream = AsyncStream<TalkEventPayload> { continuation in
+            self.talkEventContinuations[id] = continuation
+            continuation.onTermination = { [weak self] _ in
+                Task { @MainActor in
+                    self?.talkEventContinuations.removeValue(forKey: id)
+                }
+            }
+        }
+        return (id, stream)
+    }
+
+    func unsubscribeTalkEvents(id: UUID) {
+        talkEventContinuations[id]?.finish()
+        talkEventContinuations.removeValue(forKey: id)
+    }
+
     // MARK: - Models
 
     /// Fetch available models via WebSocket RPC.
@@ -218,6 +286,8 @@ final class GatewayConnection {
                 handleApprovalResolved(evt)
             case "agent":
                 handleAgentEvent(evt)
+            case "talk.event":
+                decodeTalkEvent(evt)
             default:
                 break
             }
@@ -236,6 +306,17 @@ final class GatewayConnection {
 
         for (_, continuation) in eventContinuations {
             continuation.yield(chatEvent)
+        }
+    }
+
+    private func decodeTalkEvent(_ evt: EventFrame) {
+        guard let payload = evt.payload,
+              let data = try? JSONEncoder().encode(payload),
+              let talkEvent = try? JSONDecoder().decode(TalkEventPayload.self, from: data)
+        else { return }
+
+        for (_, continuation) in talkEventContinuations {
+            continuation.yield(talkEvent)
         }
     }
 
