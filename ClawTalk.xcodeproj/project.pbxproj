@@ -81,6 +81,7 @@
 		D12B621DD280DB71E61FF70D /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8807991C12BFF0B4F763D38 /* CanvasView.swift */; };
 		D2DC7F1DE72E3D4FEC327444 /* MessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FABE61FDE40A1BD0F90CE6 /* MessageTests.swift */; };
 		D365FC62D3B4C28A93C6F48C /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72D9A2ED0DD13046136A0DAD /* AppSettingsTests.swift */; };
+		DA40F0372ACEE3219AAC4690 /* InlineMicButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55164B5C9D52EDDA40C0737 /* InlineMicButton.swift */; };
 		DA616A2287B087E3E804132D /* OpenResponsesTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13EBFECCE1B8BD87B05EB0DB /* OpenResponsesTypes.swift */; };
 		E2BFE5C8CD98AA3DEB626C71 /* OpenClawTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356E47A33B8EE9235948D1B1 /* OpenClawTypesTests.swift */; };
 		E737CEE30F62162070E03A2B /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDBF31DD14D3AB9D672C5803 /* ChatViewModel.swift */; };
@@ -162,6 +163,7 @@
 		9BE175481B49B0EE39637BAA /* ExecApprovalTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecApprovalTypes.swift; sourceTree = "<group>"; };
 		A3BEBDD1D3F59751BA17C8F8 /* CanvasCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasCapability.swift; sourceTree = "<group>"; };
 		A52511E4A305989FB28449F2 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		A55164B5C9D52EDDA40C0737 /* InlineMicButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineMicButton.swift; sourceTree = "<group>"; };
 		A8289BC4CC448727B41A7DBD /* ClawTalkTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ClawTalkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA97D363CCD7D3F347EBC1DA /* MotionCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionCapability.swift; sourceTree = "<group>"; };
 		AC0B433CDE7C2E879C21F453 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -224,6 +226,7 @@
 			children = (
 				A52511E4A305989FB28449F2 /* ChatView.swift */,
 				CDBF31DD14D3AB9D672C5803 /* ChatViewModel.swift */,
+				A55164B5C9D52EDDA40C0737 /* InlineMicButton.swift */,
 				E9D361B32BA4A9447CEE7887 /* MessageBubble.swift */,
 				3F9B322C8F6F78044D30D75E /* TalkButton.swift */,
 			);
@@ -646,6 +649,7 @@
 				60A5E156C0156F1B2579E368 /* GatewayConnection.swift in Sources */,
 				8D6A137705D074E969B48DEC /* GatewayProtocol.swift in Sources */,
 				3EB3BFC69291F0F7C61BB952 /* GatewayWebSocket.swift in Sources */,
+				DA40F0372ACEE3219AAC4690 /* InlineMicButton.swift in Sources */,
 				345CEEE3A46804B997A12FE6 /* JSONPrettyView.swift in Sources */,
 				CE93E3C05D7F122E7F5D0CBB /* LocationCapability.swift in Sources */,
 				66744E074394ECFDF41E5294 /* MemoryDetailView.swift in Sources */,

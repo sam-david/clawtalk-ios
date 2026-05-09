@@ -8,7 +8,6 @@ struct ChatView: View {
     var onBack: (() -> Void)?
     var onDeleteChannel: (() -> Void)?
     @State private var textInput = ""
-    @State private var showTextInput = true
     @State private var showClearConfirm = false
     @State private var showDeleteConfirm = false
     @State private var selectedPhotos: [PhotosPickerItem] = []
@@ -61,6 +60,17 @@ struct ChatView: View {
                 Spacer()
 
                 HStack(spacing: 14) {
+                    Button(action: toggleConversationMode) {
+                        Image(systemName: viewModel.isConversationMode
+                              ? "headphones.circle.fill"
+                              : "headphones.circle")
+                            .font(.title3)
+                            .foregroundStyle(.openClawRed)
+                    }
+                    .accessibilityLabel(viewModel.isConversationMode
+                                        ? "Exit hands-free conversation mode"
+                                        : "Start hands-free conversation mode")
+
                     Menu {
                         Button(action: { showClearConfirm = true }) {
                             Label("Clear Chat", systemImage: "trash")
@@ -150,105 +160,82 @@ struct ChatView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            if showTextInput {
-                // Text mode: compact bar with text field + mic switch
-                // State indicator inline
-                if viewModel.state != .idle {
-                    stateIndicator
-                        .padding(.top, 10)
-                        .transition(.opacity)
-                }
+            // Inline state indicator (recording/transcribing/thinking/etc.)
+            if viewModel.state != .idle {
+                stateIndicator
+                    .padding(.top, 10)
+                    .transition(.opacity)
+            }
 
-                // Attached image previews
-                if !attachedImages.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(Array(attachedImages.enumerated()), id: \.offset) { index, data in
-                                if let uiImage = UIImage(data: data) {
-                                    Image(uiImage: uiImage)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 60, height: 60)
-                                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                                        .overlay(alignment: .topTrailing) {
-                                            Button(action: { attachedImages.remove(at: index) }) {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .font(.system(size: 18))
-                                                    .symbolRenderingMode(.palette)
-                                                    .foregroundStyle(.white, .black.opacity(0.6))
-                                            }
-                                            .offset(x: 6, y: -6)
+            // Hands-free TalkButton overlay only while in conversation mode.
+            if viewModel.isConversationMode {
+                TalkButton(
+                    state: viewModel.state,
+                    audioLevel: viewModel.audioLevel,
+                    hapticsEnabled: settingsStore.settings.hapticsEnabled,
+                    onTap: {},
+                    onHoldStart: {},
+                    onHoldEnd: {}
+                )
+                .padding(.top, 4)
+                .transition(.opacity)
+            }
+
+            // Attached image previews
+            if !attachedImages.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(attachedImages.enumerated()), id: \.offset) { index, data in
+                            if let uiImage = UIImage(data: data) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 60, height: 60)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                    .overlay(alignment: .topTrailing) {
+                                        Button(action: { attachedImages.remove(at: index) }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.system(size: 18))
+                                                .symbolRenderingMode(.palette)
+                                                .foregroundStyle(.white, .black.opacity(0.6))
                                         }
-                                }
+                                        .offset(x: 6, y: -6)
+                                    }
                             }
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.top, 8)
                     }
-                    .padding(.top, 4)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+                }
+                .padding(.top, 4)
+            }
+
+            HStack(spacing: 10) {
+                PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 8, matching: .images) {
+                    Image(systemName: "photo")
+                        .font(.title3)
+                        .foregroundStyle(.openClawRed)
+                }
+                .onChange(of: selectedPhotos) {
+                    Task { await loadSelectedPhotos() }
                 }
 
-                HStack(spacing: 10) {
-                    PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 8, matching: .images) {
-                        Image(systemName: "photo")
-                            .font(.title3)
-                            .foregroundStyle(.openClawRed)
-                    }
-                    .onChange(of: selectedPhotos) {
-                        Task { await loadSelectedPhotos() }
-                    }
+                TextField("Message…", text: $textInput, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .lineLimit(1...5)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Color(.systemGray5))
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .disabled(viewModel.isConversationMode)
+                    .opacity(viewModel.isConversationMode ? 0.5 : 1.0)
 
-                    TextField("Message...", text: $textInput, axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .lineLimit(1...5)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(Color(.systemGray5))
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-
-                    if textInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachedImages.isEmpty {
-                        // Mic button to switch to voice mode
-                        Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showTextInput = false } }) {
-                            Image(systemName: "mic.fill")
-                                .font(.body)
-                                .foregroundStyle(.white)
-                                .frame(width: 40, height: 40)
-                                .background(Color.openClawRed)
-                                .clipShape(Circle())
-                        }
-                    } else {
-                        // Send button
-                        Button(action: {
-                            if settingsStore.settings.hapticsEnabled {
-                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            }
-                            viewModel.sendText(textInput, images: attachedImages)
-                            textInput = ""
-                            attachedImages = []
-                            selectedPhotos = []
-                        }) {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.title)
-                                .foregroundStyle(.openClawRed)
-                        }
-                        .disabled(viewModel.state != .idle)
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-            } else {
-                // Voice mode: mic centered, keyboard to the right
-                VStack(spacing: 8) {
-                    // State indicator
-                    if viewModel.state != .idle {
-                        stateIndicator
-                            .padding(.top, 8)
-                            .transition(.opacity)
-                    }
-
-                    TalkButton(
+                if textInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    && attachedImages.isEmpty
+                    && !viewModel.isConversationMode {
+                    // Inline push-to-talk: tap to record + tap to send, or hold to talk.
+                    InlineMicButton(
                         state: viewModel.state,
-                        audioLevel: viewModel.audioLevel,
                         hapticsEnabled: settingsStore.settings.hapticsEnabled,
                         onTap: {
                             if viewModel.state == .recording {
@@ -260,18 +247,25 @@ struct ChatView: View {
                         onHoldStart: { viewModel.startRecording() },
                         onHoldEnd: { viewModel.stopRecordingAndSend() }
                     )
-                    .overlay(alignment: .trailing) {
-                        Button(action: { withAnimation(.easeInOut(duration: 0.2)) { showTextInput = true } }) {
-                            Image(systemName: "keyboard")
-                                .font(.title2)
-                                .foregroundStyle(.openClawRed)
+                } else if !viewModel.isConversationMode {
+                    Button(action: {
+                        if settingsStore.settings.hapticsEnabled {
+                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
                         }
-                        .offset(x: 56)
+                        viewModel.sendText(textInput, images: attachedImages)
+                        textInput = ""
+                        attachedImages = []
+                        selectedPhotos = []
+                    }) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.openClawRed)
                     }
+                    .disabled(viewModel.state != .idle)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
             }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
         }
         .background(Color(.secondarySystemBackground))
         .animation(.easeInOut(duration: 0.2), value: viewModel.state)
@@ -345,6 +339,17 @@ struct ChatView: View {
                 .font(.subheadline)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
+        }
+    }
+
+    private func toggleConversationMode() {
+        if settingsStore.settings.hapticsEnabled {
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        }
+        if viewModel.isConversationMode {
+            viewModel.exitConversationMode()
+        } else {
+            viewModel.enterConversationMode()
         }
     }
 
