@@ -192,6 +192,8 @@ final class GatewayConnection {
     }
 
     /// Stream a chunk of base64-encoded PCM audio to an open talk session.
+    /// Fire-and-forget — we never need the ACK and waiting on it would hold
+    /// every chunk's RPC continuation in memory at ~10 chunks/sec.
     func talkSessionAppendAudio(sessionId: String, audioBase64: String, timestamp: Double? = nil) async throws {
         guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
         var params: [String: AnyCodable] = [
@@ -199,7 +201,7 @@ final class GatewayConnection {
             "audioBase64": AnyCodable(audioBase64),
         ]
         if let timestamp { params["timestamp"] = AnyCodable(timestamp) }
-        _ = try await gw.request(method: "talk.session.appendAudio", params: params)
+        try await gw.send(method: "talk.session.appendAudio", params: params)
     }
 
     /// Close an open talk session.

@@ -94,6 +94,12 @@ struct ClawTalkApp: App {
             .onChange(of: settingsStore.settings.voiceInputEnabled) {
                 reconfigureServices()
             }
+            .onChange(of: settingsStore.settings.useServerSideSTT) {
+                reconfigureServices()
+            }
+            .onChange(of: settingsStore.settings.whisperModelSize) {
+                reconfigureServices()
+            }
             .onChange(of: settingsStore.elevenLabsAPIKey) {
                 reconfigureServices()
             }
@@ -169,9 +175,16 @@ struct ClawTalkApp: App {
         let secure = SecureStorage.shared
         let s = settingsStore.settings
 
-        // STT — reuse cached instance if model size hasn't changed
-        let stt: any TranscriptionService
-        if let cached = cachedSTT, cachedSTTModelSize == s.whisperModelSize {
+        // STT — only instantiate (and load CoreML model) when on-device
+        // transcription is actually used. Server-side conversation STT
+        // routes through talk.session.* and doesn't need WhisperKit.
+        let stt: (any TranscriptionService)?
+        if s.useServerSideSTT {
+            // Drop any previously cached service so the model gets freed.
+            cachedSTT = nil
+            cachedSTTModelSize = nil
+            stt = nil
+        } else if let cached = cachedSTT, cachedSTTModelSize == s.whisperModelSize {
             stt = cached
         } else {
             let service = WhisperKitService(modelSize: s.whisperModelSize)

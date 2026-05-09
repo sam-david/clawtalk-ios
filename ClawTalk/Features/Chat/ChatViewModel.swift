@@ -723,7 +723,7 @@ final class ChatViewModel {
 
     // MARK: - Lifecycle
 
-    func configure(transcription: any TranscriptionService, speech: any SpeechService) {
+    func configure(transcription: (any TranscriptionService)?, speech: any SpeechService) {
         self.transcriptionService = transcription
         self.speechService = speech
     }
