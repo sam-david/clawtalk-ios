@@ -64,7 +64,8 @@ final class WhisperKitService: TranscriptionService {
         }
 
         let result = try await kit.transcribe(audioArray: audioSamples)
-        return result.map { $0.text }.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        let raw = result.map { $0.text }.joined(separator: " ")
+        return TranscriptCleanup.clean(raw)
     }
 }
 

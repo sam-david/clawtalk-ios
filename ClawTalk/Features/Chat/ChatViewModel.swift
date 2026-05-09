@@ -230,8 +230,8 @@ final class ChatViewModel {
                 talkPartialTranscript += text
             }
         case .transcriptDone:
-            let final = (evt.transcriptText ?? talkPartialTranscript)
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let raw = evt.transcriptText ?? talkPartialTranscript
+            let final = TranscriptCleanup.clean(raw)
             talkPartialTranscript = ""
             guard !final.isEmpty else { return }
 

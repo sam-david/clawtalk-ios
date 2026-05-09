@@ -51,21 +51,27 @@ struct ChatView: View {
                 Button(action: { onBack?() }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
+                            .font(.title3)
                         Text("Channels")
+                            .font(.body)
                     }
-                    .font(.body)
                     .foregroundStyle(.openClawRed)
+                    .contentShape(Rectangle())
+                    .padding(.vertical, 6)
+                    .padding(.trailing, 4)
                 }
 
                 Spacer()
 
-                HStack(spacing: 14) {
+                HStack(spacing: 18) {
                     Button(action: toggleConversationMode) {
                         Image(systemName: viewModel.isConversationMode
                               ? "headphones.circle.fill"
                               : "headphones.circle")
-                            .font(.title3)
+                            .font(.title)
                             .foregroundStyle(.openClawRed)
+                            .contentShape(Rectangle())
+                            .frame(width: 44, height: 44)
                     }
                     .accessibilityLabel(viewModel.isConversationMode
                                         ? "Exit hands-free conversation mode"
@@ -80,8 +86,10 @@ struct ChatView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .font(.body)
+                            .font(.title)
                             .foregroundStyle(.openClawRed)
+                            .contentShape(Rectangle())
+                            .frame(width: 44, height: 44)
                     }
                 }
             }
