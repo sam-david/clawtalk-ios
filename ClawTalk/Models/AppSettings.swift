@@ -54,6 +54,10 @@ struct AppSettings: Codable {
     var useWebSocket: Bool
     var webSocketPath: String
     var hapticsEnabled: Bool
+    /// When true, conversation mode streams audio to the gateway's
+    /// `talk.session` runtime instead of using on-device WhisperKit STT.
+    /// Requires gateway ≥ talk-session-runtime (commit c434d7720b).
+    var useServerSideSTT: Bool
 
     static let defaults = AppSettings(
         gatewayURL: "",
@@ -67,7 +71,8 @@ struct AppSettings: Codable {
         showTokenUsage: false,
         useWebSocket: false,
         webSocketPath: "/ws",
-        hapticsEnabled: true
+        hapticsEnabled: true,
+        useServerSideSTT: false
     )
 
     /// Build the full WebSocket URL from the gateway URL + port/path override.
@@ -117,7 +122,8 @@ struct AppSettings: Codable {
         showTokenUsage: Bool = false,
         useWebSocket: Bool = false,
         webSocketPath: String = "/ws",
-        hapticsEnabled: Bool = true
+        hapticsEnabled: Bool = true,
+        useServerSideSTT: Bool = false
     ) {
         self.gatewayURL = gatewayURL
         self.ttsProvider = ttsProvider
@@ -131,6 +137,7 @@ struct AppSettings: Codable {
         self.useWebSocket = useWebSocket
         self.webSocketPath = webSocketPath
         self.hapticsEnabled = hapticsEnabled
+        self.useServerSideSTT = useServerSideSTT
     }
 
     init(from decoder: Decoder) throws {
@@ -146,6 +153,7 @@ struct AppSettings: Codable {
         showTokenUsage = try container.decodeIfPresent(Bool.self, forKey: .showTokenUsage) ?? false
         useWebSocket = try container.decodeIfPresent(Bool.self, forKey: .useWebSocket) ?? false
         hapticsEnabled = try container.decodeIfPresent(Bool.self, forKey: .hapticsEnabled) ?? true
+        useServerSideSTT = try container.decodeIfPresent(Bool.self, forKey: .useServerSideSTT) ?? false
 
         // Migrate legacy webSocketPort → webSocketPath
         if let legacyPort = try container.decodeIfPresent(Int.self, forKey: .webSocketPort) {
@@ -161,6 +169,7 @@ struct AppSettings: Codable {
         case agentAPIMode, showTokenUsage, useWebSocket
         case webSocketPath, webSocketPort // webSocketPort for legacy decode only
         case hapticsEnabled
+        case useServerSideSTT
     }
 
     func encode(to encoder: Encoder) throws {
@@ -177,6 +186,7 @@ struct AppSettings: Codable {
         try container.encode(useWebSocket, forKey: .useWebSocket)
         try container.encode(webSocketPath, forKey: .webSocketPath)
         try container.encode(hapticsEnabled, forKey: .hapticsEnabled)
+        try container.encode(useServerSideSTT, forKey: .useServerSideSTT)
         // webSocketPort intentionally not encoded — legacy only
     }
 }

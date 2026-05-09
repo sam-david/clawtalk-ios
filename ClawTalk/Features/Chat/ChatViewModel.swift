@@ -33,6 +33,10 @@ final class ChatViewModel {
     private var currentRunId: String?
     private var currentEventSubId: UUID?
     private var ttsStopped = false
+    private var talkSessionId: String?
+    private var talkEventSubId: UUID?
+    private var talkEventTask: Task<Void, Never>?
+    private var talkPartialTranscript: String = ""
 
     /// Stable session key for this channel, used for server-side session management.
     var sessionKey: String {
@@ -147,23 +151,122 @@ final class ChatViewModel {
 
         isConversationMode = true
 
-        audioCapture.enableVAD(
-            onUtterance: { [weak self] samples in
-                Task { @MainActor in
-                    self?.handleConversationUtterance(samples)
+        if settings.settings.useServerSideSTT, let gateway = gatewayConnection,
+           gateway.connectionState == .connected {
+            startTalkSessionConversation(gateway: gateway)
+        } else {
+            audioCapture.enableVAD(
+                onUtterance: { [weak self] samples in
+                    Task { @MainActor in
+                        self?.handleConversationUtterance(samples)
+                    }
+                },
+                onInterrupt: { [weak self] in
+                    Task { @MainActor in
+                        self?.handleConversationInterrupt()
+                    }
                 }
-            },
-            onInterrupt: { [weak self] in
-                Task { @MainActor in
-                    self?.handleConversationInterrupt()
-                }
+            )
+        }
+    }
+
+    /// Set up server-side STT path: subscribe → create session → stream audio.
+    private func startTalkSessionConversation(gateway: GatewayConnection) {
+        let (subId, stream) = gateway.subscribeTalkEvents()
+        talkEventSubId = subId
+        talkPartialTranscript = ""
+
+        talkEventTask = Task { [weak self] in
+            for await evt in stream {
+                guard let self else { return }
+                await MainActor.run { self.handleTalkEvent(evt) }
+                if Task.isCancelled { break }
             }
-        )
+        }
+
+        Task {
+            do {
+                let result = try await gateway.talkSessionCreate(
+                    sessionKey: sessionKey,
+                    mode: .transcription,
+                    transport: .gatewayRelay,
+                    brain: TalkBrain.none
+                )
+                self.talkSessionId = result.sessionId
+
+                self.audioCapture.enableStreaming(
+                    onChunk: { [weak self] base64 in
+                        guard let self, let sid = self.talkSessionId else { return }
+                        Task { @MainActor in
+                            // Best-effort fire-and-forget; the session will catch up.
+                            try? await gateway.talkSessionAppendAudio(sessionId: sid, audioBase64: base64)
+                        }
+                    },
+                    onInterrupt: { [weak self] in
+                        Task { @MainActor in
+                            self?.handleConversationInterrupt()
+                        }
+                    }
+                )
+            } catch {
+                self.errorMessage = "Couldn't start talk session: \(error.localizedDescription). Falling back to on-device STT."
+                self.tearDownTalkSession()
+                self.audioCapture.enableVAD(
+                    onUtterance: { [weak self] samples in
+                        Task { @MainActor in self?.handleConversationUtterance(samples) }
+                    },
+                    onInterrupt: { [weak self] in
+                        Task { @MainActor in self?.handleConversationInterrupt() }
+                    }
+                )
+            }
+        }
+    }
+
+    private func handleTalkEvent(_ evt: TalkEventPayload) {
+        switch evt.type {
+        case .transcriptDelta:
+            if let text = evt.transcriptText {
+                talkPartialTranscript += text
+            }
+        case .transcriptDone:
+            let final = (evt.transcriptText ?? talkPartialTranscript)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            talkPartialTranscript = ""
+            guard !final.isEmpty else { return }
+
+            audioCapture.pauseListening()
+            state = .transcribing
+            sendTask = Task { await sendMessage(final) }
+        case .sessionError:
+            errorMessage = evt.errorMessage ?? "Talk session error"
+        case .sessionClosed:
+            // Server-initiated close; teardown will happen via exit.
+            break
+        default:
+            break
+        }
+    }
+
+    private func tearDownTalkSession() {
+        talkEventTask?.cancel()
+        talkEventTask = nil
+        if let id = talkEventSubId, let gateway = gatewayConnection {
+            gateway.unsubscribeTalkEvents(id: id)
+        }
+        talkEventSubId = nil
+
+        if let sid = talkSessionId, let gateway = gatewayConnection {
+            Task { try? await gateway.talkSessionClose(sessionId: sid) }
+        }
+        talkSessionId = nil
+        talkPartialTranscript = ""
     }
 
     func exitConversationMode() {
         isConversationMode = false
         sendTask?.cancel()
+        tearDownTalkSession()
         audioCapture.stopContinuousRecording()
         speechService?.stop()
         audioPlayback.stop()

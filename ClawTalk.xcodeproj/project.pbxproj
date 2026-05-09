@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -29,6 +29,7 @@
 		339A9CDBA9635E2B9402D79B /* SecurityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D502D3E03A336714471A715 /* SecurityTests.swift */; };
 		339C1D34330FF6BF97D01CC9 /* WhisperModelManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 142BA94DD86DE121B675392C /* WhisperModelManager.swift */; };
 		345CEEE3A46804B997A12FE6 /* JSONPrettyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02E78B00891A484EFA4CD644 /* JSONPrettyView.swift */; };
+		39215D7928AC8A2740AD0177 /* TalkSessionTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07D71ED2820799A9C8D7A914 /* TalkSessionTypes.swift */; };
 		3E222D7CFE828AB97D76B1F7 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4492F0C0579021896BF917A3 /* TranscriptionService.swift */; };
 		3EAF38A3665B1E74BD83BB56 /* BrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172183636AE40E0212239826 /* BrowserView.swift */; };
 		3EB3BFC69291F0F7C61BB952 /* GatewayWebSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = F280C889782FC2008D290B40 /* GatewayWebSocket.swift */; };
@@ -105,6 +106,7 @@
 
 /* Begin PBXFileReference section */
 		02E78B00891A484EFA4CD644 /* JSONPrettyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONPrettyView.swift; sourceTree = "<group>"; };
+		07D71ED2820799A9C8D7A914 /* TalkSessionTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TalkSessionTypes.swift; sourceTree = "<group>"; };
 		08FABE61FDE40A1BD0F90CE6 /* MessageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageTests.swift; sourceTree = "<group>"; };
 		0D502D3E03A336714471A715 /* SecurityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityTests.swift; sourceTree = "<group>"; };
 		0D84C50E3D944796A7FF868B /* Channel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Channel.swift; sourceTree = "<group>"; };
@@ -149,7 +151,7 @@
 		6DFC5EC252EFD110D7388382 /* DeviceAuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAuthStore.swift; sourceTree = "<group>"; };
 		707C4ACFCC95769AFCD1425E /* AudioCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCaptureManager.swift; sourceTree = "<group>"; };
 		72D9A2ED0DD13046136A0DAD /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
-		75AC426B96A923B5288634C3 /* ClawTalk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClawTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		75AC426B96A923B5288634C3 /* ClawTalk.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ClawTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		782C47299E86E32DAAB3137D /* ConversationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationStore.swift; sourceTree = "<group>"; };
 		79B7982FD7F79231E54BF4C8 /* SentenceBoundaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceBoundaryTests.swift; sourceTree = "<group>"; };
 		7D0304AECC54813A80F8D722 /* ChannelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelTests.swift; sourceTree = "<group>"; };
@@ -186,7 +188,7 @@
 		EBE3B44C5498FC75D80BF7C6 /* AddChannelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChannelView.swift; sourceTree = "<group>"; };
 		F280C889782FC2008D290B40 /* GatewayWebSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayWebSocket.swift; sourceTree = "<group>"; };
 		F433280B62B03548E7A3AC40 /* OpenAITTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITTSService.swift; sourceTree = "<group>"; };
-		F6709EEE801649A16EE7D432 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F6709EEE801649A16EE7D432 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		FD5DCDCC8A92DFEE56384845 /* ToolTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolTypesTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -322,6 +324,7 @@
 				32FFC7B16D435A96AD69AEE0 /* Message.swift */,
 				D62F79465CC0F9B9A96D8DCB /* OpenClawTypes.swift */,
 				13EBFECCE1B8BD87B05EB0DB /* OpenResponsesTypes.swift */,
+				07D71ED2820799A9C8D7A914 /* TalkSessionTypes.swift */,
 				CB70777993B2EE4989C5E921 /* ToolTypes.swift */,
 			);
 			path = Models;
@@ -543,6 +546,7 @@
 						ProvisioningStyle = Automatic;
 					};
 					CD0769F466ADCA1D6967A1E0 = {
+						DevelopmentTeam = UL35UHH8Q4;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -562,6 +566,7 @@
 				088BBCAE5D712FACD9BCE193 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				A838F3C31AA3984B3FBF628D /* XCRemoteSwiftPackageReference "WhisperKit" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -666,6 +671,7 @@
 				8369DB413B8A2F96202C4139 /* SettingsView.swift in Sources */,
 				F60AE265A27A3CEF71EB38B9 /* SpeechService.swift in Sources */,
 				C6FFE402C56564F7BB567CB2 /* TalkButton.swift in Sources */,
+				39215D7928AC8A2740AD0177 /* TalkSessionTypes.swift in Sources */,
 				F28410B331EAD102561836D7 /* Theme.swift in Sources */,
 				75767DE0109B24F67BB8893E /* ToolTypes.swift in Sources */,
 				1C388B80A1504135064978EF /* ToolsView.swift in Sources */,
@@ -693,8 +699,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = XL75YR3YGP;
+				CURRENT_PROJECT_VERSION = 2;
 				INFOPLIST_FILE = ClawTalk/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -806,8 +811,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = XL75YR3YGP;
+				CURRENT_PROJECT_VERSION = 2;
 				INFOPLIST_FILE = ClawTalk/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

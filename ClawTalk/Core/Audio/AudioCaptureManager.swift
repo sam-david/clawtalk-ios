@@ -20,6 +20,17 @@ final class AudioCaptureManager {
     private let interruptThreshold: Float = 0.08
     private let silenceDuration: TimeInterval = 1.5
 
+    // Streaming mode (server-side STT via talk session)
+    private(set) var isStreamingMode = false
+    private var onAudioChunk: ((String) -> Void)?
+    private var streamBuffer: [Float] = []
+    /// Target ~100ms chunks at 24kHz = 2400 samples.
+    private let streamChunkSamples = 2400
+    /// Resampler from input rate to 24kHz pcm16 (built lazily on first chunk).
+    private var streamConverter: AVAudioConverter?
+    private var streamInputFormat: AVAudioFormat?
+    private static let streamSampleRate: Double = 24000
+
     // MARK: - Push-to-Talk
 
     func startRecording() throws {
@@ -73,15 +84,39 @@ final class AudioCaptureManager {
     /// Fully stop conversation mode and tear down the engine.
     func stopContinuousRecording() {
         isContinuousMode = false
+        isStreamingMode = false
         isListening = false
         onUtteranceDetected = nil
         onInterrupt = nil
+        onAudioChunk = nil
         utteranceSamples = []
+        streamBuffer = []
+        streamConverter = nil
+        streamInputFormat = nil
         hasSpeechStarted = false
         lastSpeechTime = nil
         hasInterrupted = false
         _ = stopEngine()
         try? AVAudioSession.sharedInstance().setMode(.default)
+    }
+
+    // MARK: - Streaming Mode (server-side STT)
+
+    /// Switch a running engine to streaming mode. Emits ~100ms base64-encoded
+    /// pcm16 chunks at 24kHz via `onChunk`. Local interrupt detection during
+    /// playback stays active via `onInterrupt`. Call `pauseListening` /
+    /// `resumeListening` to gate streaming during TTS playback.
+    func enableStreaming(onChunk: @escaping (String) -> Void, onInterrupt: @escaping () -> Void) {
+        try? AVAudioSession.sharedInstance().setMode(.voiceChat)
+
+        isContinuousMode = true
+        isStreamingMode = true
+        onAudioChunk = onChunk
+        self.onInterrupt = onInterrupt
+        streamBuffer = []
+        listenStartTime = nil
+        hasInterrupted = false
+        isListening = true
     }
 
     // MARK: - Engine
@@ -108,7 +143,9 @@ final class AudioCaptureManager {
                 let rms = sqrt(bufferSamples.reduce(0) { $0 + $1 * $1 } / Float(frameLength))
                 self.currentLevel = rms
 
-                if self.isContinuousMode {
+                if self.isStreamingMode {
+                    self.processStreaming(bufferSamples, rms: rms, format: format)
+                } else if self.isContinuousMode {
                     self.processVAD(bufferSamples, rms: rms)
                 } else {
                     self.samples.append(contentsOf: bufferSamples)
@@ -170,6 +207,86 @@ final class AudioCaptureManager {
                 onInterrupt?()
             }
         }
+    }
+
+    // MARK: - Streaming
+
+    private func processStreaming(_ bufferSamples: [Float], rms: Float, format: AVAudioFormat) {
+        if isListening {
+            if let start = listenStartTime, Date().timeIntervalSince(start) < 0.8 {
+                // 800ms tail-skip after TTS resumes (echo guard)
+                return
+            }
+
+            streamBuffer.append(contentsOf: bufferSamples)
+
+            // Flush in ~100ms-of-output-audio-sized chunks.
+            let inputRate = format.sampleRate
+            let inputChunkSize = Int(inputRate * 0.1)
+            while streamBuffer.count >= inputChunkSize {
+                let chunk = Array(streamBuffer.prefix(inputChunkSize))
+                streamBuffer.removeFirst(inputChunkSize)
+                if let base64 = encodePCM16Base64(chunk, inputFormat: format) {
+                    onAudioChunk?(base64)
+                }
+            }
+        } else if !hasInterrupted {
+            // Not listening (TTS playing) — local interrupt detection.
+            if rms > interruptThreshold {
+                hasInterrupted = true
+                onInterrupt?()
+            }
+        }
+    }
+
+    /// Convert a Float chunk at the engine's native rate into 24kHz pcm16
+    /// (signed 16-bit little-endian) bytes, base64-encoded.
+    private func encodePCM16Base64(_ chunk: [Float], inputFormat: AVAudioFormat) -> String? {
+        guard !chunk.isEmpty,
+              let outputFormat = AVAudioFormat(
+                commonFormat: .pcmFormatInt16,
+                sampleRate: Self.streamSampleRate,
+                channels: 1,
+                interleaved: true
+              ) else { return nil }
+
+        // Cache the converter — engine format doesn't change mid-session.
+        if streamConverter == nil || streamInputFormat?.sampleRate != inputFormat.sampleRate {
+            streamConverter = AVAudioConverter(from: inputFormat, to: outputFormat)
+            streamInputFormat = inputFormat
+        }
+        guard let converter = streamConverter,
+              let inBuf = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(chunk.count)) else {
+            return nil
+        }
+        inBuf.frameLength = AVAudioFrameCount(chunk.count)
+        chunk.withUnsafeBufferPointer { ptr in
+            inBuf.floatChannelData?[0].update(from: ptr.baseAddress!, count: chunk.count)
+        }
+
+        let outFrameCapacity = AVAudioFrameCount(Double(chunk.count) * Self.streamSampleRate / inputFormat.sampleRate + 1024)
+        guard let outBuf = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outFrameCapacity) else {
+            return nil
+        }
+
+        var inputProvided = false
+        var error: NSError?
+        converter.convert(to: outBuf, error: &error) { _, status in
+            if inputProvided {
+                status.pointee = .noDataNow
+                return nil
+            }
+            inputProvided = true
+            status.pointee = .haveData
+            return inBuf
+        }
+        if error != nil { return nil }
+
+        let frameLength = Int(outBuf.frameLength)
+        guard frameLength > 0, let int16Ptr = outBuf.int16ChannelData?[0] else { return nil }
+        let byteCount = frameLength * MemoryLayout<Int16>.size
+        let data = Data(bytes: int16Ptr, count: byteCount)
+        return data.base64EncodedString()
     }
 
     // MARK: - Resampling
