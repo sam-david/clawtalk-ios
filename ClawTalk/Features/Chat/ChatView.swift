@@ -211,14 +211,7 @@ struct ChatView: View {
             }
 
             HStack(spacing: 10) {
-                PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 8, matching: .images) {
-                    Image(systemName: "photo")
-                        .font(.title3)
-                        .foregroundStyle(.openClawRed)
-                }
-                .onChange(of: selectedPhotos) {
-                    Task { await loadSelectedPhotos() }
-                }
+                attachmentsMenu
 
                 TextField("Message…", text: $textInput, axis: .vertical)
                     .textFieldStyle(.plain)
@@ -340,6 +333,32 @@ struct ChatView: View {
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
         }
+    }
+
+    @State private var showPhotosPicker = false
+
+    private var attachmentsMenu: some View {
+        Menu {
+            Button {
+                showPhotosPicker = true
+            } label: {
+                Label("Photos", systemImage: "photo.on.rectangle")
+            }
+            // Future attachment types (files, camera, etc.) hang here.
+        } label: {
+            Image(systemName: "plus.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.openClawRed)
+        }
+        .photosPicker(isPresented: $showPhotosPicker,
+                      selection: $selectedPhotos,
+                      maxSelectionCount: 8,
+                      matching: .images)
+        .onChange(of: selectedPhotos) {
+            Task { await loadSelectedPhotos() }
+        }
+        .disabled(viewModel.isConversationMode)
+        .opacity(viewModel.isConversationMode ? 0.5 : 1.0)
     }
 
     private func toggleConversationMode() {
