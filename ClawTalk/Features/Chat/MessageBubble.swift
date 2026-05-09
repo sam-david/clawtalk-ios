@@ -152,7 +152,6 @@ struct MessageBubble: View {
                                 streamingCursor
                             }
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     } else if message.isStreaming {
                         streamingCursor
                     }
