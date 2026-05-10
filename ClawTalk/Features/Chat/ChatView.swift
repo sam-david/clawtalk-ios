@@ -41,7 +41,7 @@ struct ChatView: View {
 
     private var conversationHintToast: some View {
         HStack(spacing: 10) {
-            Image(systemName: "bubble.and.waveform.fill")
+            Image(systemName: "bubble.left.and.bubble.right.fill")
                 .foregroundStyle(.openClawRed)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Hands-free conversation")
@@ -96,8 +96,8 @@ struct ChatView: View {
                 HStack(spacing: 18) {
                     Button(action: toggleConversationMode) {
                         Image(systemName: viewModel.isConversationMode
-                              ? "bubble.and.waveform.fill"
-                              : "bubble.and.waveform")
+                              ? "bubble.left.and.bubble.right.fill"
+                              : "bubble.left.and.bubble.right")
                             .font(.title)
                             .foregroundStyle(.openClawRed)
                             .contentShape(Rectangle())
