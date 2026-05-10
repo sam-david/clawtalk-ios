@@ -9,6 +9,8 @@ struct ChatView: View {
     var onDeleteChannel: (() -> Void)?
     @State private var textInput = ""
     @State private var showClearConfirm = false
+    @State private var showConversationHint = false
+    @AppStorage("hasSeenConversationToast") private var hasSeenConversationToast = false
     @State private var showDeleteConfirm = false
     @State private var selectedPhotos: [PhotosPickerItem] = []
     @State private var attachedImages: [Data] = []
@@ -27,6 +29,34 @@ struct ChatView: View {
             inputArea
         }
         .background(Color(.systemBackground))
+        .overlay(alignment: .top) {
+            if showConversationHint {
+                conversationHintToast
+                    .padding(.horizontal, 16)
+                    .padding(.top, 56)  // sits below the nav bar
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+    }
+
+    private var conversationHintToast: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "bubble.and.waveform.fill")
+                .foregroundStyle(.openClawRed)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Hands-free conversation")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                Text("Tap the icon again to stop.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
     }
 
     // MARK: - Navigation Bar
@@ -66,8 +96,8 @@ struct ChatView: View {
                 HStack(spacing: 18) {
                     Button(action: toggleConversationMode) {
                         Image(systemName: viewModel.isConversationMode
-                              ? "headphones.circle.fill"
-                              : "headphones.circle")
+                              ? "bubble.and.waveform.fill"
+                              : "bubble.and.waveform")
                             .font(.title)
                             .foregroundStyle(.openClawRed)
                             .contentShape(Rectangle())
@@ -377,6 +407,16 @@ struct ChatView: View {
             viewModel.exitConversationMode()
         } else {
             viewModel.enterConversationMode()
+            if !hasSeenConversationToast {
+                hasSeenConversationToast = true
+                withAnimation(.easeInOut(duration: 0.25)) { showConversationHint = true }
+                Task {
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    await MainActor.run {
+                        withAnimation(.easeInOut(duration: 0.25)) { showConversationHint = false }
+                    }
+                }
+            }
         }
     }
 
