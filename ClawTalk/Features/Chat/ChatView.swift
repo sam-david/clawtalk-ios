@@ -94,18 +94,20 @@ struct ChatView: View {
                 Spacer()
 
                 HStack(spacing: 18) {
-                    Button(action: toggleConversationMode) {
-                        Image(systemName: viewModel.isConversationMode
-                              ? "bubble.left.and.bubble.right.fill"
-                              : "bubble.left.and.bubble.right")
-                            .font(.title)
-                            .foregroundStyle(.openClawRed)
-                            .contentShape(Rectangle())
-                            .frame(width: 44, height: 44)
+                    if settingsStore.settings.voiceInputEnabled {
+                        Button(action: toggleConversationMode) {
+                            Image(systemName: viewModel.isConversationMode
+                                  ? "bubble.left.and.bubble.right.fill"
+                                  : "bubble.left.and.bubble.right")
+                                .font(.title)
+                                .foregroundStyle(.openClawRed)
+                                .contentShape(Rectangle())
+                                .frame(width: 44, height: 44)
+                        }
+                        .accessibilityLabel(viewModel.isConversationMode
+                                            ? "Exit hands-free conversation mode"
+                                            : "Start hands-free conversation mode")
                     }
-                    .accessibilityLabel(viewModel.isConversationMode
-                                        ? "Exit hands-free conversation mode"
-                                        : "Start hands-free conversation mode")
 
                     Menu {
                         Button(action: { showClearConfirm = true }) {
@@ -268,8 +270,9 @@ struct ChatView: View {
 
                     // Mic is visible whenever there's no typed text — even with
                     // attachments, so users can dictate a message to send
-                    // alongside their photos.
-                    if !hasText {
+                    // alongside their photos. Hidden entirely if the user has
+                    // turned voice input off in Settings.
+                    if !hasText && settingsStore.settings.voiceInputEnabled {
                         InlineMicButton(
                             state: viewModel.state,
                             hapticsEnabled: settingsStore.settings.hapticsEnabled,
@@ -293,8 +296,11 @@ struct ChatView: View {
 
                     // Send arrow appears when there's something to send (text or
                     // attachments). With only attachments, mic + send coexist
-                    // so users can pick voice or text-less send.
-                    if hasText || hasAttachments {
+                    // so users can pick voice or text-less send. When voice is
+                    // disabled, also show send for an empty input as a no-op
+                    // disabled state — better than a totally bare input row.
+                    let voiceOff = !settingsStore.settings.voiceInputEnabled
+                    if hasText || hasAttachments || voiceOff {
                         Button(action: {
                             if settingsStore.settings.hapticsEnabled {
                                 UIImpactFeedbackGenerator(style: .light).impactOccurred()

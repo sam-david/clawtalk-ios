@@ -355,12 +355,15 @@ struct SettingsView: View {
         } header: {
             Text("Speech-to-Text")
         } footer: {
-            if store.settings.useServerSideSTT {
+            if !store.settings.voiceInputEnabled {
+                Text("Voice Input is off — turn it on above to use speech-to-text.")
+            } else if store.settings.useServerSideSTT {
                 Text("Conversation mode streams audio to your gateway for transcription. Push-to-talk still uses on-device WhisperKit.")
             } else {
                 Text("Runs entirely on-device. Audio never leaves your phone.")
             }
         }
+        .disabled(!store.settings.voiceInputEnabled)
     }
 
     // MARK: - Security Info

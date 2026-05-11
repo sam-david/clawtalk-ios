@@ -91,7 +91,10 @@ struct ClawTalkApp: App {
             .onChange(of: settingsStore.settings.ttsProvider) {
                 reconfigureServices()
             }
-            .onChange(of: settingsStore.settings.voiceInputEnabled) {
+            .onChange(of: settingsStore.settings.voiceInputEnabled) { _, enabled in
+                if !enabled, chatViewModel?.isConversationMode == true {
+                    chatViewModel?.exitConversationMode()
+                }
                 reconfigureServices()
             }
             .onChange(of: settingsStore.settings.useServerSideSTT) {
