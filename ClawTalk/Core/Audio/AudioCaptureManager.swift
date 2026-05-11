@@ -45,10 +45,7 @@ final class AudioCaptureManager {
 
     // MARK: - Conversation Mode
 
-    /// Switch a running engine to VAD mode. Discards any pre-VAD samples
-    /// captured during engine warmup and enables the 800ms listen-start
-    /// guard so the first utterance gets the same warmup window that
-    /// resumed utterances get.
+    /// Switch a running engine to VAD mode. Carries over any samples already captured.
     func enableVAD(onUtterance: @escaping ([Float]) -> Void, onInterrupt: @escaping () -> Void) {
         // Enable echo cancellation for conversation mode
         try? AVAudioSession.sharedInstance().setMode(.voiceChat)
@@ -56,11 +53,11 @@ final class AudioCaptureManager {
         isContinuousMode = true
         self.onUtteranceDetected = onUtterance
         self.onInterrupt = onInterrupt
-        utteranceSamples = []
+        utteranceSamples = samples
         samples = []
-        hasSpeechStarted = false
-        lastSpeechTime = nil
-        listenStartTime = Date()
+        hasSpeechStarted = !utteranceSamples.isEmpty
+        lastSpeechTime = hasSpeechStarted ? Date() : nil
+        listenStartTime = nil
         hasInterrupted = false
         isListening = true
     }
@@ -117,10 +114,7 @@ final class AudioCaptureManager {
         onAudioChunk = onChunk
         self.onInterrupt = onInterrupt
         streamBuffer = []
-        // Skip the first 800ms so AGC has time to settle and any
-        // pre-session-ready buffers from the gateway handshake get
-        // discarded instead of sent.
-        listenStartTime = Date()
+        listenStartTime = nil
         hasInterrupted = false
         isListening = true
     }
