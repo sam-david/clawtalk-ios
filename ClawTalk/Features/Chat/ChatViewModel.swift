@@ -38,6 +38,10 @@ final class ChatViewModel {
     private var talkEventTask: Task<Void, Never>?
     private var talkPartialTranscript: String = ""
     private var talkSessionReady: Bool = false
+    /// When non-nil, the UI should render a one-time banner explaining
+    /// that the gateway doesn't support server-side STT and we've
+    /// auto-disabled the setting.
+    var serverSTTUnsupportedNotice: String?
 
     /// Stable session key for this channel, used for server-side session management.
     var sessionKey: String {
@@ -215,7 +219,16 @@ final class ChatViewModel {
                     }
                 )
             } catch {
-                self.errorMessage = "Couldn't start talk session: \(error.localizedDescription). Falling back to on-device STT."
+                if Self.isUnknownMethodError(error) {
+                    // Gateway is too old to know this method at all. Flip the
+                    // setting off so we don't keep retrying, and surface a
+                    // one-time banner explaining what happened.
+                    settings.settings.useServerSideSTT = false
+                    settings.save()
+                    serverSTTUnsupportedNotice = "Server-side STT isn't supported by your gateway. Turned the setting off; using on-device transcription instead."
+                } else {
+                    errorMessage = "Couldn't start talk session: \(error.localizedDescription). Falling back to on-device STT."
+                }
                 self.tearDownTalkSession()
                 self.audioCapture.enableVAD(
                     onUtterance: { [weak self] samples in
@@ -253,6 +266,13 @@ final class ChatViewModel {
         default:
             break
         }
+    }
+
+    private static func isUnknownMethodError(_ error: Error) -> Bool {
+        guard case GatewayWebSocket.GatewayError.responseError(_, _, let msg) = error else {
+            return false
+        }
+        return msg.lowercased().contains("unknown method")
     }
 
     private func tearDownTalkSession() {
