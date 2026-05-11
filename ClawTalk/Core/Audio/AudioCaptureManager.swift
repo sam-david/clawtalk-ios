@@ -29,6 +29,13 @@ final class AudioCaptureManager {
     private let speechThreshold: Float = 0.02
     private let interruptThreshold: Float = 0.08
     private let silenceDuration: TimeInterval = 1.5
+    /// Fallback: if hasSpeechStarted but rms never crossed
+    /// speechThreshold (e.g. iPhone voiceChat-mode AGC suppressed
+    /// the user's speech below 0.02), force-fire the accumulated
+    /// audio after this many seconds. WhisperKit can transcribe
+    /// quiet audio that the simple rms VAD wouldn't catch.
+    private let noSpeechForceFireTimeout: TimeInterval = 8.0
+    private var listenStartedAt: Date?
 
     // Streaming mode (server-side STT via talk session)
     private(set) var isStreamingMode = false
@@ -76,6 +83,7 @@ final class AudioCaptureManager {
         hasSpeechStarted = true
         lastSpeechTime = nil
         listenStartTime = nil
+        listenStartedAt = Date()
         hasInterrupted = false
         isListening = true
         log.info("enableVAD: hasSpeechStarted=true, lastSpeechTime=nil")
@@ -91,6 +99,7 @@ final class AudioCaptureManager {
         hasSpeechStarted = true
         lastSpeechTime = nil
         listenStartTime = Date()
+        listenStartedAt = Date()
         hasInterrupted = false
         isListening = true
     }
@@ -222,14 +231,28 @@ final class AudioCaptureManager {
             } else if hasSpeechStarted {
                 utteranceSamples.append(contentsOf: bufferSamples)
 
-                if let lastSpeech = lastSpeechTime,
-                   Date().timeIntervalSince(lastSpeech) >= silenceDuration,
-                   utteranceSamples.count > 8000 {
-                    log.info("VAD: utterance fire (\(self.utteranceSamples.count) samples)")
+                let normalFire = lastSpeechTime.map {
+                    Date().timeIntervalSince($0) >= silenceDuration
+                } ?? false
+                // Force-fire only kicks in when rms never crossed the
+                // speech threshold for the whole session (lastSpeechTime
+                // is still nil). This catches iPhone voiceChat AGC
+                // pulling speech below 0.02 — we'd hang forever
+                // otherwise. Requires substantial buffer (~3s) so we
+                // don't fire on a fraction of a second of room tone.
+                let forceFire = lastSpeechTime == nil
+                    && (listenStartedAt.map {
+                        Date().timeIntervalSince($0) >= noSpeechForceFireTimeout
+                    } ?? false)
+                    && utteranceSamples.count > 144_000  // ~3s @ 48kHz
+
+                if (normalFire || forceFire) && utteranceSamples.count > 8000 {
+                    log.info("VAD: utterance fire (\(self.utteranceSamples.count) samples, force=\(forceFire))")
                     let captured = utteranceSamples
                     utteranceSamples = []
                     hasSpeechStarted = false
                     lastSpeechTime = nil
+                    listenStartedAt = nil
                     isListening = false
 
                     let resampled = resampleTo16kHz(captured)
