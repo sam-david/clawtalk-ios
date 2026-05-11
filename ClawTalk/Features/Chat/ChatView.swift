@@ -261,38 +261,55 @@ struct ChatView: View {
                     .disabled(viewModel.isConversationMode)
                     .opacity(viewModel.isConversationMode ? 0.5 : 1.0)
 
-                if textInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    && attachedImages.isEmpty
-                    && !viewModel.isConversationMode {
-                    // Inline push-to-talk: tap to record + tap to send, or hold to talk.
-                    InlineMicButton(
-                        state: viewModel.state,
-                        hapticsEnabled: settingsStore.settings.hapticsEnabled,
-                        onTap: {
-                            if viewModel.state == .recording {
-                                viewModel.stopRecordingAndSend()
-                            } else {
-                                viewModel.startRecording()
+                if !viewModel.isConversationMode {
+                    let trimmed = textInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let hasText = !trimmed.isEmpty
+                    let hasAttachments = !attachedImages.isEmpty
+
+                    // Mic is visible whenever there's no typed text — even with
+                    // attachments, so users can dictate a message to send
+                    // alongside their photos.
+                    if !hasText {
+                        InlineMicButton(
+                            state: viewModel.state,
+                            hapticsEnabled: settingsStore.settings.hapticsEnabled,
+                            onTap: {
+                                if viewModel.state == .recording {
+                                    viewModel.stopRecordingAndSend(images: attachedImages)
+                                    attachedImages = []
+                                    selectedPhotos = []
+                                } else {
+                                    viewModel.startRecording()
+                                }
+                            },
+                            onHoldStart: { viewModel.startRecording() },
+                            onHoldEnd: {
+                                viewModel.stopRecordingAndSend(images: attachedImages)
+                                attachedImages = []
+                                selectedPhotos = []
                             }
-                        },
-                        onHoldStart: { viewModel.startRecording() },
-                        onHoldEnd: { viewModel.stopRecordingAndSend() }
-                    )
-                } else if !viewModel.isConversationMode {
-                    Button(action: {
-                        if settingsStore.settings.hapticsEnabled {
-                            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                        }
-                        viewModel.sendText(textInput, images: attachedImages)
-                        textInput = ""
-                        attachedImages = []
-                        selectedPhotos = []
-                    }) {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.title)
-                            .foregroundStyle(.openClawRed)
+                        )
                     }
-                    .disabled(viewModel.state != .idle)
+
+                    // Send arrow appears when there's something to send (text or
+                    // attachments). With only attachments, mic + send coexist
+                    // so users can pick voice or text-less send.
+                    if hasText || hasAttachments {
+                        Button(action: {
+                            if settingsStore.settings.hapticsEnabled {
+                                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                            }
+                            viewModel.sendText(textInput, images: attachedImages)
+                            textInput = ""
+                            attachedImages = []
+                            selectedPhotos = []
+                        }) {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title)
+                                .foregroundStyle(.openClawRed)
+                        }
+                        .disabled(viewModel.state != .idle)
+                    }
                 }
             }
             .padding(.horizontal, 12)

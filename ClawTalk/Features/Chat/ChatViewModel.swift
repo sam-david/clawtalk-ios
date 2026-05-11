@@ -37,6 +37,7 @@ final class ChatViewModel {
     private var talkEventSubId: UUID?
     private var talkEventTask: Task<Void, Never>?
     private var talkPartialTranscript: String = ""
+    private var talkSessionReady: Bool = false
 
     /// Stable session key for this channel, used for server-side session management.
     var sessionKey: String {
@@ -66,7 +67,7 @@ final class ChatViewModel {
         }
     }
 
-    func stopRecordingAndSend() {
+    func stopRecordingAndSend(images: [Data] = []) {
         guard state == .recording else { return }
         if isConversationMode { return }
 
@@ -93,7 +94,7 @@ final class ChatViewModel {
                     return
                 }
 
-                await sendMessage(transcript)
+                await sendMessage(transcript, images: images.isEmpty ? nil : images)
             } catch {
                 errorMessage = "Transcription failed: \(error.localizedDescription)"
                 state = .idle
@@ -193,12 +194,17 @@ final class ChatViewModel {
                     brain: TalkBrain.none
                 )
                 self.talkSessionId = result.sessionId
-
+                // Audio capture stays in the default (non-streaming) path
+                // until we receive a session.ready event. Without this, the
+                // first audio chunks can arrive before the upstream STT
+                // provider's session is fully open and get dropped, which
+                // surfaces as a truncated first transcript.
                 self.audioCapture.enableStreaming(
                     onChunk: { [weak self] base64 in
-                        guard let self, let sid = self.talkSessionId else { return }
+                        guard let self,
+                              let sid = self.talkSessionId,
+                              self.talkSessionReady else { return }
                         Task { @MainActor in
-                            // Best-effort fire-and-forget; the session will catch up.
                             try? await gateway.talkSessionAppendAudio(sessionId: sid, audioBase64: base64)
                         }
                     },
@@ -225,6 +231,8 @@ final class ChatViewModel {
 
     private func handleTalkEvent(_ evt: TalkEventPayload) {
         switch evt.type {
+        case .sessionReady:
+            talkSessionReady = true
         case .transcriptDelta:
             if let text = evt.transcriptText {
                 talkPartialTranscript += text
@@ -241,8 +249,7 @@ final class ChatViewModel {
         case .sessionError:
             errorMessage = evt.errorMessage ?? "Talk session error"
         case .sessionClosed:
-            // Server-initiated close; teardown will happen via exit.
-            break
+            talkSessionReady = false
         default:
             break
         }
@@ -261,6 +268,7 @@ final class ChatViewModel {
         }
         talkSessionId = nil
         talkPartialTranscript = ""
+        talkSessionReady = false
     }
 
     func exitConversationMode() {
