@@ -28,7 +28,11 @@ final class AudioCaptureManager {
     // hasSpeechStarted state machine, fixed in 019b1b2.
     private let speechThreshold: Float = 0.02
     private let interruptThreshold: Float = 0.08
-    private let silenceDuration: TimeInterval = 1.5
+    /// Time of silence after detected speech before firing an utterance.
+    /// 0.9s is the sweet spot — short enough to feel responsive, long
+    /// enough to forgive natural mid-sentence pauses (typical comma
+    /// pauses are 200–400ms, sentence-end pauses are 600–800ms).
+    private let silenceDuration: TimeInterval = 0.9
     /// Fallback: if hasSpeechStarted but rms never crossed
     /// speechThreshold (e.g. iPhone voiceChat-mode AGC suppressed
     /// the user's speech below 0.02), force-fire the accumulated
