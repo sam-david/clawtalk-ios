@@ -53,10 +53,15 @@ final class AudioCaptureManager {
 
     // MARK: - Conversation Mode
 
-    /// Switch a running engine to VAD mode. Minimal change from the
-    /// known-good "works but cuts off first message" baseline: just sets
-    /// lastSpeechTime to nil instead of Date() so that silence-only
-    /// buffers can't trigger a premature empty utterance.
+    /// Switch a running engine to VAD mode.
+    ///
+    /// hasSpeechStarted starts true so audio always accumulates into
+    /// utteranceSamples — this is the only way the else-if branch of
+    /// processVAD (which both appends buffers and runs the silence
+    /// timeout) ever runs. lastSpeechTime starts nil so silence-only
+    /// audio can't trigger a premature empty utterance — the fire
+    /// check requires a non-nil lastSpeechTime, which only gets set
+    /// once real speech crosses speechThreshold.
     func enableVAD(onUtterance: @escaping ([Float]) -> Void, onInterrupt: @escaping () -> Void) {
         // Enable echo cancellation for conversation mode
         try? AVAudioSession.sharedInstance().setMode(.voiceChat)
@@ -64,20 +69,24 @@ final class AudioCaptureManager {
         isContinuousMode = true
         self.onUtteranceDetected = onUtterance
         self.onInterrupt = onInterrupt
-        utteranceSamples = samples
+        utteranceSamples = []
         samples = []
-        hasSpeechStarted = !utteranceSamples.isEmpty
+        hasSpeechStarted = true
         lastSpeechTime = nil
         listenStartTime = nil
         hasInterrupted = false
         isListening = true
-        log.info("enableVAD: inherited \(self.utteranceSamples.count) pre-VAD samples; hasSpeechStarted=\(self.hasSpeechStarted)")
+        log.info("enableVAD: hasSpeechStarted=true, lastSpeechTime=nil")
     }
 
     /// Resume listening for the next utterance (after TTS finishes).
+    /// Same shape as enableVAD: hasSpeechStarted=true so the silence
+    /// timeout can fire, lastSpeechTime=nil so it doesn't fire until
+    /// real speech. listenStartTime=Date() keeps the 800ms warmup
+    /// that swallows the TTS echo tail.
     func resumeListening() {
         utteranceSamples = []
-        hasSpeechStarted = false
+        hasSpeechStarted = true
         lastSpeechTime = nil
         listenStartTime = Date()
         hasInterrupted = false
