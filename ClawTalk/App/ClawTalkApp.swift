@@ -69,6 +69,19 @@ struct ClawTalkApp: App {
             .tint(.openClawRed)
             .preferredColorScheme(.dark)
             .task {
+                // Pre-warm WhisperKit at app launch so the first
+                // conversation-mode utterance doesn't pay the 3s
+                // CoreML cold-load cost. Triggers Task.detached load
+                // inside the service's init; the eager work runs in
+                // the background while the user navigates to a chat.
+                if settingsStore.settings.voiceInputEnabled,
+                   modelManager.hasDownloadedModel,
+                   cachedSTT == nil {
+                    let warmup = WhisperKitService(modelSize: settingsStore.settings.whisperModelSize)
+                    cachedSTT = warmup
+                    cachedSTTModelSize = settingsStore.settings.whisperModelSize
+                }
+
                 guard settingsStore.settings.useWebSocket,
                       settingsStore.isConfigured else { return }
 
