@@ -54,12 +54,6 @@ final class AudioCaptureManager {
         try? AVAudioSession.sharedInstance().setMode(.voiceChat)
 
         isContinuousMode = true
-        // Explicitly leave streaming mode if a prior streaming session
-        // didn't tear it down. The audio tap routes by isStreamingMode
-        // first, so leaving it set would silently swallow audio.
-        isStreamingMode = false
-        onAudioChunk = nil
-        streamBuffer = []
         self.onUtteranceDetected = onUtterance
         self.onInterrupt = onInterrupt
         utteranceSamples = []
@@ -120,12 +114,6 @@ final class AudioCaptureManager {
 
         isContinuousMode = true
         isStreamingMode = true
-        // Clear VAD-mode callbacks so a stale callback can't fire if
-        // we hop back into VAD later.
-        onUtteranceDetected = nil
-        utteranceSamples = []
-        hasSpeechStarted = false
-        lastSpeechTime = nil
         onAudioChunk = onChunk
         self.onInterrupt = onInterrupt
         streamBuffer = []
