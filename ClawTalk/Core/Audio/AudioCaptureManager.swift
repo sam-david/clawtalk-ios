@@ -45,10 +45,12 @@ final class AudioCaptureManager {
 
     // MARK: - Conversation Mode
 
-    /// Switch a running engine to VAD mode. Discards any pre-VAD samples
-    /// captured during engine startup so they don't falsely mark
-    /// hasSpeechStarted with a stale timestamp. No artificial warmup gate —
-    /// the VAD waits for real speech to cross the threshold.
+    /// Switch a running engine to VAD mode. Starts with hasSpeechStarted
+    /// true so audio always accumulates (avoids hangs when AGC suppresses
+    /// initial buffers below threshold), but leaves lastSpeechTime nil
+    /// until real speech crosses the threshold — so the silence-timeout
+    /// can't fire on silence-only buffers and produce an empty first
+    /// utterance.
     func enableVAD(onUtterance: @escaping ([Float]) -> Void, onInterrupt: @escaping () -> Void) {
         // Enable echo cancellation for conversation mode
         try? AVAudioSession.sharedInstance().setMode(.voiceChat)
@@ -58,7 +60,7 @@ final class AudioCaptureManager {
         self.onInterrupt = onInterrupt
         utteranceSamples = []
         samples = []
-        hasSpeechStarted = false
+        hasSpeechStarted = true
         lastSpeechTime = nil
         listenStartTime = nil
         hasInterrupted = false
