@@ -19,12 +19,14 @@ final class AudioCaptureManager {
     private var isListening = false
     private var listenStartTime: Date?
     private var hasInterrupted = false
-    // Lowered from 0.02 → 0.008 because voiceChat-mode AGC on real
-    // devices often keeps normal speech below 0.02 RMS, making the
-    // VAD never enter its "speaking" state and the app appear hung.
-    // 0.008 still comfortably rejects room-tone silence (~0.001-0.004
-    // on both sim and device).
-    private let speechThreshold: Float = 0.008
+    // Back to 0.02 (original working value). Lowering it to 0.008
+    // turned out to be a mistake — the sim's room-tone floor sits
+    // around 0.012 and was registering as "speech" continuously,
+    // keeping lastSpeechTime refreshed forever and preventing the
+    // 1.5s silence timeout from ever firing. The earlier "hang" we
+    // attributed to AGC suppression was actually the asymmetric
+    // hasSpeechStarted state machine, fixed in 019b1b2.
+    private let speechThreshold: Float = 0.02
     private let interruptThreshold: Float = 0.08
     private let silenceDuration: TimeInterval = 1.5
 
