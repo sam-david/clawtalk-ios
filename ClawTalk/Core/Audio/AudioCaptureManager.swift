@@ -1,4 +1,7 @@
 import AVFoundation
+import os.log
+
+private let log = Logger(subsystem: "com.openclaw.clawtalk", category: "audio-capture")
 
 final class AudioCaptureManager {
     private var audioEngine: AVAudioEngine?
@@ -45,12 +48,10 @@ final class AudioCaptureManager {
 
     // MARK: - Conversation Mode
 
-    /// Switch a running engine to VAD mode. Starts with hasSpeechStarted
-    /// true so audio always accumulates (avoids hangs when AGC suppresses
-    /// initial buffers below threshold), but leaves lastSpeechTime nil
-    /// until real speech crosses the threshold — so the silence-timeout
-    /// can't fire on silence-only buffers and produce an empty first
-    /// utterance.
+    /// Switch a running engine to VAD mode. Minimal change from the
+    /// known-good "works but cuts off first message" baseline: just sets
+    /// lastSpeechTime to nil instead of Date() so that silence-only
+    /// buffers can't trigger a premature empty utterance.
     func enableVAD(onUtterance: @escaping ([Float]) -> Void, onInterrupt: @escaping () -> Void) {
         // Enable echo cancellation for conversation mode
         try? AVAudioSession.sharedInstance().setMode(.voiceChat)
@@ -58,13 +59,14 @@ final class AudioCaptureManager {
         isContinuousMode = true
         self.onUtteranceDetected = onUtterance
         self.onInterrupt = onInterrupt
-        utteranceSamples = []
+        utteranceSamples = samples
         samples = []
-        hasSpeechStarted = true
+        hasSpeechStarted = !utteranceSamples.isEmpty
         lastSpeechTime = nil
         listenStartTime = nil
         hasInterrupted = false
         isListening = true
+        log.info("enableVAD: inherited \(self.utteranceSamples.count) pre-VAD samples; hasSpeechStarted=\(self.hasSpeechStarted)")
     }
 
     /// Resume listening for the next utterance (after TTS finishes).
@@ -178,7 +180,16 @@ final class AudioCaptureManager {
 
     // MARK: - VAD
 
+    private var debugTickCount = 0
+
     private func processVAD(_ bufferSamples: [Float], rms: Float) {
+        // Tick log every ~50 buffers (~1s of audio) so we can see whether
+        // the tap is firing at all and what the rms looks like.
+        debugTickCount += 1
+        if debugTickCount % 50 == 0 {
+            log.info("VAD tick #\(self.debugTickCount): rms=\(String(format: "%.4f", rms)) listening=\(self.isListening) speech=\(self.hasSpeechStarted) hasLast=\(self.lastSpeechTime != nil) samples=\(self.utteranceSamples.count)")
+        }
+
         if isListening {
             // Ignore first 800ms after resuming (TTS tail audio / echo)
             if let start = listenStartTime, Date().timeIntervalSince(start) < 0.8 {
@@ -186,6 +197,9 @@ final class AudioCaptureManager {
             }
 
             if rms > speechThreshold {
+                if !hasSpeechStarted {
+                    log.info("VAD: speech detected (rms=\(String(format: "%.4f", rms)))")
+                }
                 hasSpeechStarted = true
                 lastSpeechTime = Date()
                 utteranceSamples.append(contentsOf: bufferSamples)
@@ -195,6 +209,7 @@ final class AudioCaptureManager {
                 if let lastSpeech = lastSpeechTime,
                    Date().timeIntervalSince(lastSpeech) >= silenceDuration,
                    utteranceSamples.count > 8000 {
+                    log.info("VAD: utterance fire (\(self.utteranceSamples.count) samples)")
                     let captured = utteranceSamples
                     utteranceSamples = []
                     hasSpeechStarted = false
