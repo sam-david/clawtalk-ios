@@ -178,12 +178,13 @@ struct ClawTalkApp: App {
         let secure = SecureStorage.shared
         let s = settingsStore.settings
 
-        // STT — only instantiate (and load CoreML model) when on-device
-        // transcription is actually used. Server-side conversation STT
-        // routes through talk.session.* and doesn't need WhisperKit.
+        // STT — WhisperKit is the on-device transcriber used for
+        // push-to-talk in every config, and for conversation mode when
+        // server-side STT isn't enabled. We keep it loaded whenever
+        // voice input is enabled at all; the only way to skip the
+        // load is to disable Voice Input entirely.
         let stt: (any TranscriptionService)?
-        if s.useServerSideSTT {
-            // Drop any previously cached service so the model gets freed.
+        if !s.voiceInputEnabled {
             cachedSTT = nil
             cachedSTTModelSize = nil
             stt = nil

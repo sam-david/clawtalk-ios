@@ -359,7 +359,7 @@ struct SettingsView: View {
             if !store.settings.voiceInputEnabled {
                 Text("Voice Input is off — turn it on above to use speech-to-text.")
             } else if !store.settings.useWebSocket {
-                Text("Server-side STT requires WebSocket Mode (in Connection above). On-device WhisperKit is used otherwise.")
+                Text("Server-side STT requires WebSocket Mode (in Connection above). Push-to-talk and conversation mode run on-device with WhisperKit.")
             } else if store.settings.useServerSideSTT {
                 Text("Conversation mode streams audio to your gateway for transcription. Push-to-talk still uses on-device WhisperKit.")
             } else {
