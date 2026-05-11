@@ -326,6 +326,7 @@ struct SettingsView: View {
     private var sttSection: some View {
         Section {
             Toggle("Server-side conversation STT", isOn: $store.settings.useServerSideSTT)
+                .disabled(!store.settings.useWebSocket)
             Picker("Whisper Model", selection: Binding(
                 get: { store.settings.whisperModelSize },
                 set: { newSize in
@@ -357,6 +358,8 @@ struct SettingsView: View {
         } footer: {
             if !store.settings.voiceInputEnabled {
                 Text("Voice Input is off — turn it on above to use speech-to-text.")
+            } else if !store.settings.useWebSocket {
+                Text("Server-side STT requires WebSocket Mode (in Connection above). On-device WhisperKit is used otherwise.")
             } else if store.settings.useServerSideSTT {
                 Text("Conversation mode streams audio to your gateway for transcription. Push-to-talk still uses on-device WhisperKit.")
             } else {
