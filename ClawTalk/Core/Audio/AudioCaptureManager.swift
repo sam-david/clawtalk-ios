@@ -29,10 +29,10 @@ final class AudioCaptureManager {
     private let speechThreshold: Float = 0.02
     private let interruptThreshold: Float = 0.08
     /// Time of silence after detected speech before firing an utterance.
-    /// 0.6s matches modern voice-mode apps (ChatGPT, Siri). Anything
-    /// longer feels laggy after WhisperKit is warmed up; anything
-    /// shorter risks cutting people off mid-comma.
-    private let silenceDuration: TimeInterval = 0.6
+    /// 0.5s is roughly the tightest you can go without firing on
+    /// natural sentence-ending pauses (~400ms). Below this you'll
+    /// start cutting people off mid-thought.
+    private let silenceDuration: TimeInterval = 0.5
     /// Fallback: if hasSpeechStarted but rms never crossed
     /// speechThreshold (e.g. iPhone voiceChat-mode AGC suppressed
     /// the user's speech below 0.02), force-fire the accumulated
