@@ -1,6 +1,9 @@
 import Foundation
 import SwiftUI
 import UIKit
+import os.log
+
+private let talkLog = Logger(subsystem: "com.openclaw.clawtalk", category: "talk-session")
 
 enum ChatState: Equatable {
     case idle
@@ -38,6 +41,7 @@ final class ChatViewModel {
     private var talkEventTask: Task<Void, Never>?
     private var talkPartialTranscript: String = ""
     private var talkSessionReady: Bool = false
+    private var talkSessionReadyTimeoutTask: Task<Void, Never>?
     /// When non-nil, the UI should render a one-time banner explaining
     /// that the gateway doesn't support server-side STT and we've
     /// auto-disabled the setting.
@@ -180,6 +184,7 @@ final class ChatViewModel {
         let (subId, stream) = gateway.subscribeTalkEvents()
         talkEventSubId = subId
         talkPartialTranscript = ""
+        talkLog.info("startTalkSessionConversation: subscribed events, calling talk.session.create")
 
         talkEventTask = Task { [weak self] in
             for await evt in stream {
@@ -198,6 +203,24 @@ final class ChatViewModel {
                     brain: TalkBrain.none
                 )
                 self.talkSessionId = result.sessionId
+                talkLog.info("talk.session.create succeeded: sessionId=\(result.sessionId, privacy: .public) mode=\(result.mode.rawValue, privacy: .public) transport=\(result.transport.rawValue, privacy: .public)")
+
+                // Bail out if session.ready never arrives. Common causes:
+                // no STT provider configured on the gateway, or the
+                // upstream provider rejected the session. Falling back
+                // to WhisperKit is better than a silent hang.
+                self.talkSessionReadyTimeoutTask = Task { [weak self] in
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    guard let self else { return }
+                    await MainActor.run {
+                        if self.isConversationMode && !self.talkSessionReady {
+                            talkLog.error("session.ready never arrived after 5s; falling back to on-device VAD")
+                            self.errorMessage = "Your gateway accepted the talk session but never marked it ready — usually means no transcription provider is configured. Falling back to on-device STT."
+                            self.fallbackToOnDeviceConversation()
+                        }
+                    }
+                }
+
                 // Audio capture stays in the default (non-streaming) path
                 // until we receive a session.ready event. Without this, the
                 // first audio chunks can arrive before the upstream STT
@@ -219,6 +242,7 @@ final class ChatViewModel {
                     }
                 )
             } catch {
+                talkLog.error("talk.session.create failed: \(error.localizedDescription, privacy: .public)")
                 if Self.isUnknownMethodError(error) {
                     // Gateway is too old to know this method at all. Flip the
                     // setting off so we don't keep retrying, and surface a
@@ -245,14 +269,19 @@ final class ChatViewModel {
     private func handleTalkEvent(_ evt: TalkEventPayload) {
         switch evt.type {
         case .sessionReady:
+            talkLog.info("session.ready received")
             talkSessionReady = true
+            talkSessionReadyTimeoutTask?.cancel()
+            talkSessionReadyTimeoutTask = nil
         case .transcriptDelta:
             if let text = evt.transcriptText {
                 talkPartialTranscript += text
             }
+            talkLog.info("transcript.delta (running=\(self.talkPartialTranscript.count) chars)")
         case .transcriptDone:
             let raw = evt.transcriptText ?? talkPartialTranscript
             let final = TranscriptCleanup.clean(raw)
+            talkLog.info("transcript.done: \(final.prefix(80), privacy: .public)")
             talkPartialTranscript = ""
             guard !final.isEmpty else { return }
 
@@ -260,12 +289,31 @@ final class ChatViewModel {
             state = .transcribing
             sendTask = Task { await sendMessage(final) }
         case .sessionError:
-            errorMessage = evt.errorMessage ?? "Talk session error"
+            let msg = evt.errorMessage ?? "Talk session error"
+            talkLog.error("session.error: \(msg, privacy: .public); falling back to on-device VAD")
+            errorMessage = "Talk session error: \(msg). Falling back to on-device STT."
+            fallbackToOnDeviceConversation()
         case .sessionClosed:
+            talkLog.info("session.closed")
             talkSessionReady = false
         default:
             break
         }
+    }
+
+    /// Tear down a broken/timed-out talk session and switch the running
+    /// conversation over to the WhisperKit + local-VAD path. Keeps the
+    /// user in conversation mode so they don't have to re-enter it.
+    private func fallbackToOnDeviceConversation() {
+        tearDownTalkSession()
+        audioCapture.enableVAD(
+            onUtterance: { [weak self] samples in
+                Task { @MainActor in self?.handleConversationUtterance(samples) }
+            },
+            onInterrupt: { [weak self] in
+                Task { @MainActor in self?.handleConversationInterrupt() }
+            }
+        )
     }
 
     private static func isUnknownMethodError(_ error: Error) -> Bool {
@@ -276,6 +324,8 @@ final class ChatViewModel {
     }
 
     private func tearDownTalkSession() {
+        talkSessionReadyTimeoutTask?.cancel()
+        talkSessionReadyTimeoutTask = nil
         talkEventTask?.cancel()
         talkEventTask = nil
         if let id = talkEventSubId, let gateway = gatewayConnection {
