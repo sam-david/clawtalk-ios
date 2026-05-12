@@ -37,6 +37,28 @@ targets:
       - package: WhisperKit
       - package: KeychainAccess
       - package: MarkdownUI
+    postCompileScripts:
+      - name: Bundle WhisperKit model (Debug only)
+        script: |
+          if [ "$CONFIGURATION" != "Debug" ]; then
+            echo "Skipping bundled WhisperKit model (Release build)."
+            exit 0
+          fi
+          SRC="$SRCROOT/.dev-resources/whisperkit-coreml"
+          DEST="$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whisperkit-coreml"
+          if [ ! -d "$SRC" ]; then
+            echo "No dev-resources WhisperKit model found at $SRC. Skipping bundle."
+            exit 0
+          fi
+          if [ -d "$DEST" ] && [ "$DEST/openai_whisper-small.en" -nt "$SRC/openai_whisper-small.en" ]; then
+            echo "Bundled WhisperKit model already up to date."
+            exit 0
+          fi
+          mkdir -p "$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH"
+          rsync -a --delete "$SRC/" "$DEST/"
+          echo "Copied dev WhisperKit model into Debug build."
+        outputFiles:
+          - $(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/whisperkit-coreml
     settings:
       base:
         INFOPLIST_FILE: ClawTalk/Resources/Info.plist

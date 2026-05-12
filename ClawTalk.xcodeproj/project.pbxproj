@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -156,7 +156,7 @@
 		707C4ACFCC95769AFCD1425E /* AudioCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCaptureManager.swift; sourceTree = "<group>"; };
 		710E7053E9D61C00E2D11E7D /* TranscriptCleanupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptCleanupTests.swift; sourceTree = "<group>"; };
 		72D9A2ED0DD13046136A0DAD /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
-		75AC426B96A923B5288634C3 /* ClawTalk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClawTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		75AC426B96A923B5288634C3 /* ClawTalk.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ClawTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		782C47299E86E32DAAB3137D /* ConversationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationStore.swift; sourceTree = "<group>"; };
 		79B7982FD7F79231E54BF4C8 /* SentenceBoundaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceBoundaryTests.swift; sourceTree = "<group>"; };
 		7D0304AECC54813A80F8D722 /* ChannelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelTests.swift; sourceTree = "<group>"; };
@@ -196,7 +196,7 @@
 		EBE3B44C5498FC75D80BF7C6 /* AddChannelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChannelView.swift; sourceTree = "<group>"; };
 		F280C889782FC2008D290B40 /* GatewayWebSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayWebSocket.swift; sourceTree = "<group>"; };
 		F433280B62B03548E7A3AC40 /* OpenAITTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITTSService.swift; sourceTree = "<group>"; };
-		F6709EEE801649A16EE7D432 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F6709EEE801649A16EE7D432 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		FD5DCDCC8A92DFEE56384845 /* ToolTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolTypesTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -527,6 +527,7 @@
 			buildConfigurationList = 048CE90D74A29B6AB3001E30 /* Build configuration list for PBXNativeTarget "ClawTalk" */;
 			buildPhases = (
 				C5ECB2DB2195BD8AB054760A /* Sources */,
+				DC1596EBC1278956C661ADC7 /* Bundle WhisperKit model (Debug only) */,
 				8B7C46DB6103121AEB5F608D /* Resources */,
 				6D0DD614FE5AFE65583FEFF4 /* Frameworks */,
 			);
@@ -558,6 +559,7 @@
 						ProvisioningStyle = Automatic;
 					};
 					CD0769F466ADCA1D6967A1E0 = {
+						DevelopmentTeam = UL35UHH8Q4;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -577,6 +579,7 @@
 				088BBCAE5D712FACD9BCE193 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				A838F3C31AA3984B3FBF628D /* XCRemoteSwiftPackageReference "WhisperKit" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -597,6 +600,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		DC1596EBC1278956C661ADC7 /* Bundle WhisperKit model (Debug only) */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle WhisperKit model (Debug only)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/whisperkit-coreml",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" != \"Debug\" ]; then\n  echo \"Skipping bundled WhisperKit model (Release build).\"\n  exit 0\nfi\nSRC=\"$SRCROOT/.dev-resources/whisperkit-coreml\"\nDEST=\"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whisperkit-coreml\"\nif [ ! -d \"$SRC\" ]; then\n  echo \"No dev-resources WhisperKit model found at $SRC. Skipping bundle.\"\n  exit 0\nfi\nif [ -d \"$DEST\" ] && [ \"$DEST/openai_whisper-small.en\" -nt \"$SRC/openai_whisper-small.en\" ]; then\n  echo \"Bundled WhisperKit model already up to date.\"\n  exit 0\nfi\nmkdir -p \"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nrsync -a --delete \"$SRC/\" \"$DEST/\"\necho \"Copied dev WhisperKit model into Debug build.\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		13A2C1EE53366A4695113D8A /* Sources */ = {
@@ -714,7 +739,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = XL75YR3YGP;
 				INFOPLIST_FILE = ClawTalk/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -827,7 +851,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = XL75YR3YGP;
 				INFOPLIST_FILE = ClawTalk/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
