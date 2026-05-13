@@ -323,12 +323,22 @@ final class GatewayConnection {
         // talk.event topic carry the actual TalkEvent nested inside a
         // `talkEvent` field, alongside transcription-relay metadata
         // (transcriptionSessionId, type="ready"/"inputAudio"/etc).
+        // Transcript text sits on the OUTER envelope (`text`, `final`),
+        // not inside the inner talkEvent.data, so when present we
+        // splice it into the inner event's data field so the
+        // TalkEventPayload.transcriptText accessor finds it.
         // Fall back to a direct TalkEventPayload decode in case some
         // emission path sends the TalkEvent at the top level.
         if let env = try? JSONDecoder().decode(TalkEventEnvelope.self, from: data),
            let inner = env.talkEvent {
+            let merged: TalkEventPayload
+            if let text = env.text {
+                merged = inner.replacingData(with: ["text": AnyCodable(text)])
+            } else {
+                merged = inner
+            }
             for (_, continuation) in talkEventContinuations {
-                continuation.yield(inner)
+                continuation.yield(merged)
             }
             return
         }

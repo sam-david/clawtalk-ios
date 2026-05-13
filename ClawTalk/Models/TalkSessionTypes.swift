@@ -110,11 +110,43 @@ struct TalkEventPayload: Decodable, Sendable {
 }
 
 /// The gateway broadcasts on the `talk.event` topic with a wrapper
-/// payload — the actual TalkEvent is nested inside a `talkEvent` field.
-/// Outer shape: { transcriptionSessionId, type: "ready"/"inputAudio"/…, talkEvent }
-/// See src/gateway/talk-transcription-relay.ts (broadcastToOwner).
+/// payload — the actual TalkEvent is nested inside a `talkEvent` field,
+/// alongside relay metadata. Transcript text in particular sits at the
+/// OUTER wrapper level (`text`, `final`), NOT inside the nested
+/// talkEvent.data. See src/gateway/talk-transcription-relay.ts
+/// (broadcastToOwner).
 struct TalkEventEnvelope: Decodable, Sendable {
+    /// Optional wrapper-level transcript text (transcript.delta / .done).
+    let text: String?
+    /// Optional wrapper-level "final" flag on transcripts.
+    let final: Bool?
+    /// The actual TalkEvent (session.ready, transcript.done, …).
     let talkEvent: TalkEventPayload?
+}
+
+extension TalkEventPayload {
+    /// Build a copy of this payload with `data` replaced by the given
+    /// dictionary. Used when the relay envelope carries transcript
+    /// text at the outer level — we splice it into the inner event's
+    /// data so the existing transcriptText accessor finds it.
+    func replacingData(with dict: [String: AnyCodable]) -> TalkEventPayload {
+        let json: [String: Any] = [
+            "id": id,
+            "type": type.rawValue,
+            "sessionId": sessionId,
+            "turnId": turnId as Any,
+            "captureId": captureId as Any,
+            "seq": seq,
+            "timestamp": timestamp,
+            "data": dict.mapValues { $0.value },
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: json),
+              let copy = try? JSONDecoder().decode(TalkEventPayload.self, from: data)
+        else {
+            return self
+        }
+        return copy
+    }
 }
 
 // Convenience accessors for the transcription-mode events ClawTalk reads.

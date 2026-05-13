@@ -301,7 +301,10 @@ final class ChatViewModel {
             talkLog.info("session.closed")
             talkSessionReady = false
         default:
-            break
+            // Most-frequent default-case events are input.audio.delta
+            // confirmations; log at debug level so the console can be
+            // filtered when noisy but isn't completely silent.
+            talkLog.debug("talk event: \(evt.type.rawValue, privacy: .public)")
         }
     }
 
