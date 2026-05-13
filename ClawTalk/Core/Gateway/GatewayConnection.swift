@@ -279,6 +279,10 @@ final class GatewayConnection {
         case .snapshot(let hello):
             logger.info("gateway snapshot received (uptime: \(hello.snapshot.uptimems)ms)")
         case .event(let evt):
+            // Temporary diagnostic: log every push event the gateway sends
+            // so we can see whether talk-session events ever arrive (and
+            // under what event-name) even if they don't match our switch.
+            logger.info("push event: \(evt.event, privacy: .public)")
             switch evt.event {
             case "chat":
                 decodeChatEvent(evt)
