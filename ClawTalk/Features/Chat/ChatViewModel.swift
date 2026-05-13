@@ -1,9 +1,6 @@
 import Foundation
 import SwiftUI
 import UIKit
-import os.log
-
-private let vadLog = Logger(subsystem: "com.openclaw.clawtalk", category: "audio-capture")
 
 enum ChatState: Equatable {
     case idle
@@ -193,7 +190,6 @@ final class ChatViewModel {
 
                 let transcript = try await stt.transcribe(audioSamples: samples)
                 guard !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                    vadLog.info("conversation utterance produced empty transcript (samples=\(samples.count)) — resuming listening")
                     if isConversationMode {
                         audioCapture.resumeListening()
                         state = .recording
@@ -201,7 +197,6 @@ final class ChatViewModel {
                     return
                 }
 
-                vadLog.info("conversation transcript: \(transcript.prefix(80), privacy: .public)")
                 await sendMessage(transcript)
             } catch is CancellationError {
                 // Interrupted - don't change state

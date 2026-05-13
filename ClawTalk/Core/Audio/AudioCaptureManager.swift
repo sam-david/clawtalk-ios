@@ -74,7 +74,6 @@ final class AudioCaptureManager {
         listenStartTime = nil
         hasInterrupted = false
         isListening = true
-        log.info("enableVAD")
     }
 
     /// Resume listening for the next utterance (after TTS finishes).
@@ -181,15 +180,7 @@ final class AudioCaptureManager {
 
     // MARK: - VAD
 
-    private var debugTickCount = 0
-
     private func processVAD(_ bufferSamples: [Float], smoothedRms: Float) {
-        // ~1Hz heartbeat. Strip before release.
-        debugTickCount += 1
-        if debugTickCount % 50 == 0 {
-            log.info("VAD tick: rms=\(String(format: "%.4f", smoothedRms)) listening=\(self.isListening) speech=\(self.hasSpeechStarted) hasLast=\(self.lastSpeechTime != nil) samples=\(self.utteranceSamples.count)")
-        }
-
         if isListening {
             // Ignore first 800ms after resuming (TTS tail audio / echo)
             if let start = listenStartTime, Date().timeIntervalSince(start) < 0.8 {
@@ -197,9 +188,6 @@ final class AudioCaptureManager {
             }
 
             if smoothedRms > speechThreshold {
-                if lastSpeechTime == nil {
-                    log.info("VAD: speech start (rms=\(String(format: "%.4f", smoothedRms)))")
-                }
                 hasSpeechStarted = true
                 lastSpeechTime = Date()
                 utteranceSamples.append(contentsOf: bufferSamples)
@@ -211,7 +199,6 @@ final class AudioCaptureManager {
                 } ?? false
 
                 if normalFire && utteranceSamples.count > 8000 {
-                    log.info("VAD fire: samples=\(self.utteranceSamples.count)")
                     let captured = utteranceSamples
                     utteranceSamples = []
                     hasSpeechStarted = false
