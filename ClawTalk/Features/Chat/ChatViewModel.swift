@@ -210,12 +210,16 @@ final class ChatViewModel {
                 // upstream provider rejected the session. Falling back
                 // to WhisperKit is better than a silent hang.
                 self.talkSessionReadyTimeoutTask = Task { [weak self] in
-                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    // 10s — some upstream STT providers (Bedrock cold,
+                    // OpenAI Realtime warmup) take 6–8s on the first
+                    // session. Shorter timeouts produced false negatives
+                    // even after the gateway was configured correctly.
+                    try? await Task.sleep(nanoseconds: 10_000_000_000)
                     guard let self else { return }
                     await MainActor.run {
                         if self.isConversationMode && !self.talkSessionReady {
-                            talkLog.error("session.ready never arrived after 5s; falling back to on-device VAD")
-                            self.errorMessage = "Your gateway accepted the talk session but never marked it ready — usually means no transcription provider is configured. Falling back to on-device STT."
+                            talkLog.error("session.ready never arrived after 10s; falling back to on-device VAD")
+                            self.errorMessage = "Your gateway accepted the talk session but never marked it ready in 10s — check that a transcription provider is configured and the gateway restarted after the config edit. Falling back to on-device STT."
                             self.fallbackToOnDeviceConversation()
                         }
                     }
