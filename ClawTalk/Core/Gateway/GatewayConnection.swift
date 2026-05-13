@@ -316,14 +316,30 @@ final class GatewayConnection {
     }
 
     private func decodeTalkEvent(_ evt: EventFrame) {
-        guard let payload = evt.payload,
-              let data = try? JSONEncoder().encode(payload),
-              let talkEvent = try? JSONDecoder().decode(TalkEventPayload.self, from: data)
-        else { return }
+        guard let payload = evt.payload else { return }
+        guard let data = try? JSONEncoder().encode(payload) else { return }
 
-        for (_, continuation) in talkEventContinuations {
-            continuation.yield(talkEvent)
+        // Unwrap the relay envelope first — gateway broadcasts on the
+        // talk.event topic carry the actual TalkEvent nested inside a
+        // `talkEvent` field, alongside transcription-relay metadata
+        // (transcriptionSessionId, type="ready"/"inputAudio"/etc).
+        // Fall back to a direct TalkEventPayload decode in case some
+        // emission path sends the TalkEvent at the top level.
+        if let env = try? JSONDecoder().decode(TalkEventEnvelope.self, from: data),
+           let inner = env.talkEvent {
+            for (_, continuation) in talkEventContinuations {
+                continuation.yield(inner)
+            }
+            return
         }
+        if let direct = try? JSONDecoder().decode(TalkEventPayload.self, from: data) {
+            for (_, continuation) in talkEventContinuations {
+                continuation.yield(direct)
+            }
+            return
+        }
+        // Neither shape decoded — likely a relay-only event (e.g. type:
+        // "close" with no talkEvent attached). Ignore quietly.
     }
 
     private func handleApprovalRequested(_ evt: EventFrame) {

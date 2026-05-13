@@ -109,6 +109,14 @@ struct TalkEventPayload: Decodable, Sendable {
     }
 }
 
+/// The gateway broadcasts on the `talk.event` topic with a wrapper
+/// payload — the actual TalkEvent is nested inside a `talkEvent` field.
+/// Outer shape: { transcriptionSessionId, type: "ready"/"inputAudio"/…, talkEvent }
+/// See src/gateway/talk-transcription-relay.ts (broadcastToOwner).
+struct TalkEventEnvelope: Decodable, Sendable {
+    let talkEvent: TalkEventPayload?
+}
+
 // Convenience accessors for the transcription-mode events ClawTalk reads.
 extension TalkEventPayload {
     private var dict: [String: AnyCodable]? {
