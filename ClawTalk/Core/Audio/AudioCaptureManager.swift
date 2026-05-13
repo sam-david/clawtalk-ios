@@ -1,7 +1,4 @@
 import AVFoundation
-import os.log
-
-private let log = Logger(subsystem: "com.openclaw.clawtalk", category: "audio-capture")
 
 final class AudioCaptureManager {
     private var audioEngine: AVAudioEngine?
@@ -19,13 +16,6 @@ final class AudioCaptureManager {
     private var isListening = false
     private var listenStartTime: Date?
     private var hasInterrupted = false
-    // Back to 0.02 (original working value). Lowering it to 0.008
-    // turned out to be a mistake — the sim's room-tone floor sits
-    // around 0.012 and was registering as "speech" continuously,
-    // keeping lastSpeechTime refreshed forever and preventing the
-    // 1.5s silence timeout from ever firing. The earlier "hang" we
-    // attributed to AGC suppression was actually the asymmetric
-    // hasSpeechStarted state machine, fixed in 019b1b2.
     private let speechThreshold: Float = 0.02
     private let interruptThreshold: Float = 0.08
     /// Time of silence after detected speech before firing an utterance.
@@ -40,17 +30,6 @@ final class AudioCaptureManager {
     /// quiet audio that the simple rms VAD wouldn't catch.
     private let noSpeechForceFireTimeout: TimeInterval = 8.0
     private var listenStartedAt: Date?
-
-    // Streaming mode (server-side STT via talk session)
-    private(set) var isStreamingMode = false
-    private var onAudioChunk: ((String) -> Void)?
-    private var streamBuffer: [Float] = []
-    /// Target ~100ms chunks at 24kHz = 2400 samples.
-    private let streamChunkSamples = 2400
-    /// Resampler from input rate to 24kHz pcm16 (built lazily on first chunk).
-    private var streamConverter: AVAudioConverter?
-    private var streamInputFormat: AVAudioFormat?
-    private static let streamSampleRate: Double = 24000
 
     // MARK: - Push-to-Talk
 
@@ -90,7 +69,6 @@ final class AudioCaptureManager {
         listenStartedAt = Date()
         hasInterrupted = false
         isListening = true
-        log.info("enableVAD: hasSpeechStarted=true, lastSpeechTime=nil")
     }
 
     /// Resume listening for the next utterance (after TTS finishes).
@@ -120,39 +98,15 @@ final class AudioCaptureManager {
     /// Fully stop conversation mode and tear down the engine.
     func stopContinuousRecording() {
         isContinuousMode = false
-        isStreamingMode = false
         isListening = false
         onUtteranceDetected = nil
         onInterrupt = nil
-        onAudioChunk = nil
         utteranceSamples = []
-        streamBuffer = []
-        streamConverter = nil
-        streamInputFormat = nil
         hasSpeechStarted = false
         lastSpeechTime = nil
         hasInterrupted = false
         _ = stopEngine()
         try? AVAudioSession.sharedInstance().setMode(.default)
-    }
-
-    // MARK: - Streaming Mode (server-side STT)
-
-    /// Switch a running engine to streaming mode. Emits ~100ms base64-encoded
-    /// pcm16 chunks at 24kHz via `onChunk`. Local interrupt detection during
-    /// playback stays active via `onInterrupt`. Call `pauseListening` /
-    /// `resumeListening` to gate streaming during TTS playback.
-    func enableStreaming(onChunk: @escaping (String) -> Void, onInterrupt: @escaping () -> Void) {
-        try? AVAudioSession.sharedInstance().setMode(.voiceChat)
-
-        isContinuousMode = true
-        isStreamingMode = true
-        onAudioChunk = onChunk
-        self.onInterrupt = onInterrupt
-        streamBuffer = []
-        listenStartTime = nil
-        hasInterrupted = false
-        isListening = true
     }
 
     // MARK: - Engine
@@ -179,9 +133,7 @@ final class AudioCaptureManager {
                 let rms = sqrt(bufferSamples.reduce(0) { $0 + $1 * $1 } / Float(frameLength))
                 self.currentLevel = rms
 
-                if self.isStreamingMode {
-                    self.processStreaming(bufferSamples, rms: rms, format: format)
-                } else if self.isContinuousMode {
+                if self.isContinuousMode {
                     self.processVAD(bufferSamples, rms: rms)
                 } else {
                     self.samples.append(contentsOf: bufferSamples)
@@ -209,16 +161,7 @@ final class AudioCaptureManager {
 
     // MARK: - VAD
 
-    private var debugTickCount = 0
-
     private func processVAD(_ bufferSamples: [Float], rms: Float) {
-        // Tick log every ~50 buffers (~1s of audio) so we can see whether
-        // the tap is firing at all and what the rms looks like.
-        debugTickCount += 1
-        if debugTickCount % 50 == 0 {
-            log.info("VAD tick #\(self.debugTickCount): rms=\(String(format: "%.4f", rms)) listening=\(self.isListening) speech=\(self.hasSpeechStarted) hasLast=\(self.lastSpeechTime != nil) samples=\(self.utteranceSamples.count)")
-        }
-
         if isListening {
             // Ignore first 800ms after resuming (TTS tail audio / echo)
             if let start = listenStartTime, Date().timeIntervalSince(start) < 0.8 {
@@ -226,9 +169,6 @@ final class AudioCaptureManager {
             }
 
             if rms > speechThreshold {
-                if !hasSpeechStarted {
-                    log.info("VAD: speech detected (rms=\(String(format: "%.4f", rms)))")
-                }
                 hasSpeechStarted = true
                 lastSpeechTime = Date()
                 utteranceSamples.append(contentsOf: bufferSamples)
@@ -251,7 +191,6 @@ final class AudioCaptureManager {
                     && utteranceSamples.count > 144_000  // ~3s @ 48kHz
 
                 if (normalFire || forceFire) && utteranceSamples.count > 8000 {
-                    log.info("VAD: utterance fire (\(self.utteranceSamples.count) samples, force=\(forceFire))")
                     let captured = utteranceSamples
                     utteranceSamples = []
                     hasSpeechStarted = false
@@ -270,86 +209,6 @@ final class AudioCaptureManager {
                 onInterrupt?()
             }
         }
-    }
-
-    // MARK: - Streaming
-
-    private func processStreaming(_ bufferSamples: [Float], rms: Float, format: AVAudioFormat) {
-        if isListening {
-            if let start = listenStartTime, Date().timeIntervalSince(start) < 0.8 {
-                // 800ms tail-skip after TTS resumes (echo guard)
-                return
-            }
-
-            streamBuffer.append(contentsOf: bufferSamples)
-
-            // Flush in ~100ms-of-output-audio-sized chunks.
-            let inputRate = format.sampleRate
-            let inputChunkSize = Int(inputRate * 0.1)
-            while streamBuffer.count >= inputChunkSize {
-                let chunk = Array(streamBuffer.prefix(inputChunkSize))
-                streamBuffer.removeFirst(inputChunkSize)
-                if let base64 = encodePCM16Base64(chunk, inputFormat: format) {
-                    onAudioChunk?(base64)
-                }
-            }
-        } else if !hasInterrupted {
-            // Not listening (TTS playing) — local interrupt detection.
-            if rms > interruptThreshold {
-                hasInterrupted = true
-                onInterrupt?()
-            }
-        }
-    }
-
-    /// Convert a Float chunk at the engine's native rate into 24kHz pcm16
-    /// (signed 16-bit little-endian) bytes, base64-encoded.
-    private func encodePCM16Base64(_ chunk: [Float], inputFormat: AVAudioFormat) -> String? {
-        guard !chunk.isEmpty,
-              let outputFormat = AVAudioFormat(
-                commonFormat: .pcmFormatInt16,
-                sampleRate: Self.streamSampleRate,
-                channels: 1,
-                interleaved: true
-              ) else { return nil }
-
-        // Cache the converter — engine format doesn't change mid-session.
-        if streamConverter == nil || streamInputFormat?.sampleRate != inputFormat.sampleRate {
-            streamConverter = AVAudioConverter(from: inputFormat, to: outputFormat)
-            streamInputFormat = inputFormat
-        }
-        guard let converter = streamConverter,
-              let inBuf = AVAudioPCMBuffer(pcmFormat: inputFormat, frameCapacity: AVAudioFrameCount(chunk.count)) else {
-            return nil
-        }
-        inBuf.frameLength = AVAudioFrameCount(chunk.count)
-        chunk.withUnsafeBufferPointer { ptr in
-            inBuf.floatChannelData?[0].update(from: ptr.baseAddress!, count: chunk.count)
-        }
-
-        let outFrameCapacity = AVAudioFrameCount(Double(chunk.count) * Self.streamSampleRate / inputFormat.sampleRate + 1024)
-        guard let outBuf = AVAudioPCMBuffer(pcmFormat: outputFormat, frameCapacity: outFrameCapacity) else {
-            return nil
-        }
-
-        var inputProvided = false
-        var error: NSError?
-        converter.convert(to: outBuf, error: &error) { _, status in
-            if inputProvided {
-                status.pointee = .noDataNow
-                return nil
-            }
-            inputProvided = true
-            status.pointee = .haveData
-            return inBuf
-        }
-        if error != nil { return nil }
-
-        let frameLength = Int(outBuf.frameLength)
-        guard frameLength > 0, let int16Ptr = outBuf.int16ChannelData?[0] else { return nil }
-        let byteCount = frameLength * MemoryLayout<Int16>.size
-        let data = Data(bytes: int16Ptr, count: byteCount)
-        return data.base64EncodedString()
     }
 
     // MARK: - Resampling

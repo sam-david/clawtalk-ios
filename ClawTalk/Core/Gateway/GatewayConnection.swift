@@ -26,7 +26,6 @@ final class GatewayConnection {
     private let logger = Logger(subsystem: "com.openclaw.clawtalk", category: "gateway-conn")
     private var gateway: GatewayWebSocket?
     private var eventContinuations: [UUID: AsyncStream<ChatEventPayload>.Continuation] = [:]
-    private var talkEventContinuations: [UUID: AsyncStream<TalkEventPayload>.Continuation] = [:]
 
     // MARK: - Connection Lifecycle
 
@@ -164,75 +163,6 @@ final class GatewayConnection {
         eventContinuations.removeValue(forKey: id)
     }
 
-    // MARK: - Talk Session
-
-    /// Open a transcription-mode talk session. Audio frames go in via
-    /// `talkSessionAppendAudio`; transcripts come back as `talk.event`
-    /// notifications subscribed via `subscribeTalkEvents`.
-    func talkSessionCreate(
-        sessionKey: String? = nil,
-        provider: String? = nil,
-        model: String? = nil,
-        mode: TalkMode = .transcription,
-        transport: TalkTransport = .gatewayRelay,
-        brain: TalkBrain = .none,
-        ttlMs: Int? = nil
-    ) async throws -> TalkSessionCreateResult {
-        guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
-        var params: [String: AnyCodable] = [
-            "mode": AnyCodable(mode.rawValue),
-            "transport": AnyCodable(transport.rawValue),
-            "brain": AnyCodable(brain.rawValue),
-        ]
-        if let sessionKey { params["sessionKey"] = AnyCodable(sessionKey) }
-        if let provider { params["provider"] = AnyCodable(provider) }
-        if let model { params["model"] = AnyCodable(model) }
-        if let ttlMs { params["ttlMs"] = AnyCodable(ttlMs) }
-        return try await gw.requestDecoded(method: "talk.session.create", params: params)
-    }
-
-    /// Stream a chunk of base64-encoded PCM audio to an open talk session.
-    /// Fire-and-forget — we never need the ACK and waiting on it would hold
-    /// every chunk's RPC continuation in memory at ~10 chunks/sec.
-    func talkSessionAppendAudio(sessionId: String, audioBase64: String, timestamp: Double? = nil) async throws {
-        guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
-        var params: [String: AnyCodable] = [
-            "sessionId": AnyCodable(sessionId),
-            "audioBase64": AnyCodable(audioBase64),
-        ]
-        if let timestamp { params["timestamp"] = AnyCodable(timestamp) }
-        try await gw.send(method: "talk.session.appendAudio", params: params)
-    }
-
-    /// Close an open talk session.
-    func talkSessionClose(sessionId: String) async throws {
-        guard let gw = gateway else { throw GatewayWebSocket.GatewayError.notConnected }
-        _ = try await gw.request(
-            method: "talk.session.close",
-            params: ["sessionId": AnyCodable(sessionId)]
-        )
-    }
-
-    /// Subscribe to `talk.event` push notifications. Subscribe BEFORE
-    /// calling `talkSessionCreate` to avoid missing `session.ready`.
-    func subscribeTalkEvents() -> (id: UUID, stream: AsyncStream<TalkEventPayload>) {
-        let id = UUID()
-        let stream = AsyncStream<TalkEventPayload> { continuation in
-            self.talkEventContinuations[id] = continuation
-            continuation.onTermination = { [weak self] _ in
-                Task { @MainActor in
-                    self?.talkEventContinuations.removeValue(forKey: id)
-                }
-            }
-        }
-        return (id, stream)
-    }
-
-    func unsubscribeTalkEvents(id: UUID) {
-        talkEventContinuations[id]?.finish()
-        talkEventContinuations.removeValue(forKey: id)
-    }
-
     // MARK: - Models
 
     /// Fetch available models via WebSocket RPC.
@@ -279,10 +209,6 @@ final class GatewayConnection {
         case .snapshot(let hello):
             logger.info("gateway snapshot received (uptime: \(hello.snapshot.uptimems)ms)")
         case .event(let evt):
-            // Temporary diagnostic: log every push event the gateway sends
-            // so we can see whether talk-session events ever arrive (and
-            // under what event-name) even if they don't match our switch.
-            logger.info("push event: \(evt.event, privacy: .public)")
             switch evt.event {
             case "chat":
                 decodeChatEvent(evt)
@@ -292,8 +218,6 @@ final class GatewayConnection {
                 handleApprovalResolved(evt)
             case "agent":
                 handleAgentEvent(evt)
-            case "talk.event":
-                decodeTalkEvent(evt)
             default:
                 break
             }
@@ -313,43 +237,6 @@ final class GatewayConnection {
         for (_, continuation) in eventContinuations {
             continuation.yield(chatEvent)
         }
-    }
-
-    private func decodeTalkEvent(_ evt: EventFrame) {
-        guard let payload = evt.payload else { return }
-        guard let data = try? JSONEncoder().encode(payload) else { return }
-
-        // Unwrap the relay envelope first — gateway broadcasts on the
-        // talk.event topic carry the actual TalkEvent nested inside a
-        // `talkEvent` field, alongside transcription-relay metadata
-        // (transcriptionSessionId, type="ready"/"inputAudio"/etc).
-        // Transcript text sits on the OUTER envelope (`text`, `final`),
-        // not inside the inner talkEvent.data, so when present we
-        // splice it into the inner event's data field so the
-        // TalkEventPayload.transcriptText accessor finds it.
-        // Fall back to a direct TalkEventPayload decode in case some
-        // emission path sends the TalkEvent at the top level.
-        if let env = try? JSONDecoder().decode(TalkEventEnvelope.self, from: data),
-           let inner = env.talkEvent {
-            let merged: TalkEventPayload
-            if let text = env.text {
-                merged = inner.replacingData(with: ["text": AnyCodable(text)])
-            } else {
-                merged = inner
-            }
-            for (_, continuation) in talkEventContinuations {
-                continuation.yield(merged)
-            }
-            return
-        }
-        if let direct = try? JSONDecoder().decode(TalkEventPayload.self, from: data) {
-            for (_, continuation) in talkEventContinuations {
-                continuation.yield(direct)
-            }
-            return
-        }
-        // Neither shape decoded — likely a relay-only event (e.g. type:
-        // "close" with no talkEvent attached). Ignore quietly.
     }
 
     private func handleApprovalRequested(_ evt: EventFrame) {

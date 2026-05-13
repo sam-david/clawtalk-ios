@@ -1,9 +1,6 @@
 import Foundation
 import SwiftUI
 import UIKit
-import os.log
-
-private let talkLog = Logger(subsystem: "com.openclaw.clawtalk", category: "talk-session")
 
 enum ChatState: Equatable {
     case idle
@@ -36,16 +33,6 @@ final class ChatViewModel {
     private var currentRunId: String?
     private var currentEventSubId: UUID?
     private var ttsStopped = false
-    private var talkSessionId: String?
-    private var talkEventSubId: UUID?
-    private var talkEventTask: Task<Void, Never>?
-    private var talkPartialTranscript: String = ""
-    private var talkSessionReady: Bool = false
-    private var talkSessionReadyTimeoutTask: Task<Void, Never>?
-    /// When non-nil, the UI should render a one-time banner explaining
-    /// that the gateway doesn't support server-side STT and we've
-    /// auto-disabled the setting.
-    var serverSTTUnsupportedNotice: String?
 
     /// Stable session key for this channel, used for server-side session management.
     var sessionKey: String {
@@ -160,198 +147,23 @@ final class ChatViewModel {
 
         isConversationMode = true
 
-        if settings.settings.useServerSideSTT, let gateway = gatewayConnection,
-           gateway.connectionState == .connected {
-            startTalkSessionConversation(gateway: gateway)
-        } else {
-            audioCapture.enableVAD(
-                onUtterance: { [weak self] samples in
-                    Task { @MainActor in
-                        self?.handleConversationUtterance(samples)
-                    }
-                },
-                onInterrupt: { [weak self] in
-                    Task { @MainActor in
-                        self?.handleConversationInterrupt()
-                    }
-                }
-            )
-        }
-    }
-
-    /// Set up server-side STT path: subscribe → create session → stream audio.
-    private func startTalkSessionConversation(gateway: GatewayConnection) {
-        let (subId, stream) = gateway.subscribeTalkEvents()
-        talkEventSubId = subId
-        talkPartialTranscript = ""
-        talkLog.info("startTalkSessionConversation: subscribed events, calling talk.session.create")
-
-        talkEventTask = Task { [weak self] in
-            for await evt in stream {
-                guard let self else { return }
-                await MainActor.run { self.handleTalkEvent(evt) }
-                if Task.isCancelled { break }
-            }
-        }
-
-        Task {
-            do {
-                let result = try await gateway.talkSessionCreate(
-                    sessionKey: sessionKey,
-                    mode: .transcription,
-                    transport: .gatewayRelay,
-                    brain: TalkBrain.none
-                )
-                self.talkSessionId = result.sessionId
-                talkLog.info("talk.session.create succeeded: sessionId=\(result.sessionId, privacy: .public) mode=\(result.mode.rawValue, privacy: .public) transport=\(result.transport.rawValue, privacy: .public)")
-
-                // Bail out if session.ready never arrives. Common causes:
-                // no STT provider configured on the gateway, or the
-                // upstream provider rejected the session. Falling back
-                // to WhisperKit is better than a silent hang.
-                self.talkSessionReadyTimeoutTask = Task { [weak self] in
-                    // 10s — some upstream STT providers (Bedrock cold,
-                    // OpenAI Realtime warmup) take 6–8s on the first
-                    // session. Shorter timeouts produced false negatives
-                    // even after the gateway was configured correctly.
-                    try? await Task.sleep(nanoseconds: 10_000_000_000)
-                    guard let self else { return }
-                    await MainActor.run {
-                        if self.isConversationMode && !self.talkSessionReady {
-                            talkLog.error("session.ready never arrived after 10s; falling back to on-device VAD")
-                            self.errorMessage = "Your gateway accepted the talk session but never marked it ready in 10s — check that a transcription provider is configured and the gateway restarted after the config edit. Falling back to on-device STT."
-                            self.fallbackToOnDeviceConversation()
-                        }
-                    }
-                }
-
-                // Audio capture stays in the default (non-streaming) path
-                // until we receive a session.ready event. Without this, the
-                // first audio chunks can arrive before the upstream STT
-                // provider's session is fully open and get dropped, which
-                // surfaces as a truncated first transcript.
-                self.audioCapture.enableStreaming(
-                    onChunk: { [weak self] base64 in
-                        guard let self,
-                              let sid = self.talkSessionId,
-                              self.talkSessionReady else { return }
-                        Task { @MainActor in
-                            try? await gateway.talkSessionAppendAudio(sessionId: sid, audioBase64: base64)
-                        }
-                    },
-                    onInterrupt: { [weak self] in
-                        Task { @MainActor in
-                            self?.handleConversationInterrupt()
-                        }
-                    }
-                )
-            } catch {
-                talkLog.error("talk.session.create failed: \(error.localizedDescription, privacy: .public)")
-                if Self.isUnknownMethodError(error) {
-                    // Gateway is too old to know this method at all. Flip the
-                    // setting off so we don't keep retrying, and surface a
-                    // one-time banner explaining what happened.
-                    settings.settings.useServerSideSTT = false
-                    settings.save()
-                    serverSTTUnsupportedNotice = "Server-side STT isn't supported by your gateway. Turned the setting off; using on-device transcription instead."
-                } else {
-                    errorMessage = "Couldn't start talk session: \(error.localizedDescription). Falling back to on-device STT."
-                }
-                self.tearDownTalkSession()
-                self.audioCapture.enableVAD(
-                    onUtterance: { [weak self] samples in
-                        Task { @MainActor in self?.handleConversationUtterance(samples) }
-                    },
-                    onInterrupt: { [weak self] in
-                        Task { @MainActor in self?.handleConversationInterrupt() }
-                    }
-                )
-            }
-        }
-    }
-
-    private func handleTalkEvent(_ evt: TalkEventPayload) {
-        switch evt.type {
-        case .sessionReady:
-            talkLog.info("session.ready received")
-            talkSessionReady = true
-            talkSessionReadyTimeoutTask?.cancel()
-            talkSessionReadyTimeoutTask = nil
-        case .transcriptDelta:
-            if let text = evt.transcriptText {
-                talkPartialTranscript += text
-            }
-            talkLog.info("transcript.delta (running=\(self.talkPartialTranscript.count) chars)")
-        case .transcriptDone:
-            let raw = evt.transcriptText ?? talkPartialTranscript
-            let final = TranscriptCleanup.clean(raw)
-            talkLog.info("transcript.done: \(final.prefix(80), privacy: .public)")
-            talkPartialTranscript = ""
-            guard !final.isEmpty else { return }
-
-            audioCapture.pauseListening()
-            state = .transcribing
-            sendTask = Task { await sendMessage(final) }
-        case .sessionError:
-            let msg = evt.errorMessage ?? "Talk session error"
-            talkLog.error("session.error: \(msg, privacy: .public); falling back to on-device VAD")
-            errorMessage = "Talk session error: \(msg). Falling back to on-device STT."
-            fallbackToOnDeviceConversation()
-        case .sessionClosed:
-            talkLog.info("session.closed")
-            talkSessionReady = false
-        default:
-            // Most-frequent default-case events are input.audio.delta
-            // confirmations; log at debug level so the console can be
-            // filtered when noisy but isn't completely silent.
-            talkLog.debug("talk event: \(evt.type.rawValue, privacy: .public)")
-        }
-    }
-
-    /// Tear down a broken/timed-out talk session and switch the running
-    /// conversation over to the WhisperKit + local-VAD path. Keeps the
-    /// user in conversation mode so they don't have to re-enter it.
-    private func fallbackToOnDeviceConversation() {
-        tearDownTalkSession()
         audioCapture.enableVAD(
             onUtterance: { [weak self] samples in
-                Task { @MainActor in self?.handleConversationUtterance(samples) }
+                Task { @MainActor in
+                    self?.handleConversationUtterance(samples)
+                }
             },
             onInterrupt: { [weak self] in
-                Task { @MainActor in self?.handleConversationInterrupt() }
+                Task { @MainActor in
+                    self?.handleConversationInterrupt()
+                }
             }
         )
-    }
-
-    private static func isUnknownMethodError(_ error: Error) -> Bool {
-        guard case GatewayWebSocket.GatewayError.responseError(_, _, let msg) = error else {
-            return false
-        }
-        return msg.lowercased().contains("unknown method")
-    }
-
-    private func tearDownTalkSession() {
-        talkSessionReadyTimeoutTask?.cancel()
-        talkSessionReadyTimeoutTask = nil
-        talkEventTask?.cancel()
-        talkEventTask = nil
-        if let id = talkEventSubId, let gateway = gatewayConnection {
-            gateway.unsubscribeTalkEvents(id: id)
-        }
-        talkEventSubId = nil
-
-        if let sid = talkSessionId, let gateway = gatewayConnection {
-            Task { try? await gateway.talkSessionClose(sessionId: sid) }
-        }
-        talkSessionId = nil
-        talkPartialTranscript = ""
-        talkSessionReady = false
     }
 
     func exitConversationMode() {
         isConversationMode = false
         sendTask?.cancel()
-        tearDownTalkSession()
         audioCapture.stopContinuousRecording()
         speechService?.stop()
         audioPlayback.stop()

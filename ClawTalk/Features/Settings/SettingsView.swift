@@ -325,8 +325,6 @@ struct SettingsView: View {
 
     private var sttSection: some View {
         Section {
-            Toggle("Server-side conversation STT", isOn: $store.settings.useServerSideSTT)
-                .disabled(!store.settings.useWebSocket)
             Picker("Whisper Model", selection: Binding(
                 get: { store.settings.whisperModelSize },
                 set: { newSize in
@@ -342,7 +340,6 @@ struct SettingsView: View {
                     Text(model.displayName).tag(model)
                 }
             }
-            .disabled(store.settings.useServerSideSTT)
             .confirmationDialog("Download Large Model?", isPresented: $showModelConfirm, titleVisibility: .visible) {
                 Button("Download (~1.6 GB)") {
                     if let size = pendingModelSize {
@@ -358,10 +355,6 @@ struct SettingsView: View {
         } footer: {
             if !store.settings.voiceInputEnabled {
                 Text("Voice Input is off — turn it on above to use speech-to-text.")
-            } else if !store.settings.useWebSocket {
-                Text("Server-side STT requires WebSocket Mode (in Connection above). Push-to-talk and conversation mode run on-device with WhisperKit.")
-            } else if store.settings.useServerSideSTT {
-                Text("Conversation mode streams audio to your gateway for transcription. Push-to-talk still uses on-device WhisperKit.")
             } else {
                 Text("Runs entirely on-device. Audio never leaves your phone.")
             }

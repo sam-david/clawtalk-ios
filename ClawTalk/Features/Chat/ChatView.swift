@@ -35,49 +35,8 @@ struct ChatView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 56)
                     .transition(.move(edge: .top).combined(with: .opacity))
-            } else if let notice = viewModel.serverSTTUnsupportedNotice {
-                serverSTTUnsupportedBanner(notice)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 56)
-                    .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .onChange(of: viewModel.serverSTTUnsupportedNotice) { _, newValue in
-            // Auto-dismiss the explanatory banner after 5s.
-            guard newValue != nil else { return }
-            Task {
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
-                await MainActor.run {
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        viewModel.serverSTTUnsupportedNotice = nil
-                    }
-                }
-            }
-        }
-    }
-
-    private func serverSTTUnsupportedBanner(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-            Spacer(minLength: 0)
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    viewModel.serverSTTUnsupportedNotice = nil
-                }
-            }) {
-                Image(systemName: "xmark")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
     }
 
     private var conversationHintToast: some View {

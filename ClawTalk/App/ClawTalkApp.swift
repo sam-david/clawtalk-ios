@@ -110,9 +110,6 @@ struct ClawTalkApp: App {
                 }
                 reconfigureServices()
             }
-            .onChange(of: settingsStore.settings.useServerSideSTT) {
-                reconfigureServices()
-            }
             .onChange(of: settingsStore.settings.whisperModelSize) {
                 reconfigureServices()
             }
