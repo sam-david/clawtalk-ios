@@ -1,6 +1,8 @@
 # ClawTalk — Demo Recording Guide
 
-Scripted prompts and instructions for capturing App Store previews and screenshots.
+Scripted prompts and instructions for capturing the App Store preview and
+screenshots. The release headlines hands-free **Conversation Mode**, so
+both the preview video and the screenshot ordering put it first.
 
 ---
 
@@ -8,131 +10,90 @@ Scripted prompts and instructions for capturing App Store previews and screensho
 
 1. In Xcode: **Edit Scheme > Run > Arguments** — add the launch argument for the template you want
 2. Build and run on the **iPhone 15 Pro Max** simulator (6.7" — required for App Store)
-3. Start screen recording: **Simulator > File > Record Screen**
-4. Navigate into the channel, scroll up briefly to show conversation history
-5. Type (or speak via mic) the scripted prompt below
-6. Wait for the full streaming response to finish
-7. Stop recording
+3. For screenshots: capture via `Cmd+S` in Simulator
+4. For video: **Simulator > File > Record Screen**
 
 ---
 
-## Template: General Assistant
+## App Preview Video — Conversation Mode (the single preview)
 
-**Launch argument:** `--seed-demo general`
+We're publishing **one** App Preview rather than three. Reason: App Store
+crams multiple previews up front, splitting viewer attention. A single
+focused conversation-mode loop is the strongest possible signal of what
+this app actually is.
 
-**Seeded context:** Casual Q&A — weather, memory preference.
+### Recording script
 
-**Scripted prompt (type):**
-> What's the current time in Tokyo?
+**Setup:** `--seed-demo general` (so the channel has visible prior history)
 
-*Why this works:* Produces a short 1-2 sentence response that streams quickly — perfect for a 15-30s recording without awkward waiting.
+**Steps:**
 
----
+1. Launch app — channel list appears
+2. Tap **Main** to enter the channel
+3. Scroll the conversation up briefly to show prior turns (proves this isn't a blank screen)
+4. Tap the **conversation mode** button (bubble icon)
+5. Pulsing rings appear, "Listening…" label visible
+6. Say clearly: **"What's a good book to read this month?"**
+7. Wait for: VAD detects end-of-speech → "Transcribing…" → user message appears → assistant response streams in → TTS speaks the reply
+8. **Second exchange (this is critical — proves it's hands-free):**
+   - The mic should automatically resume listening after TTS finishes
+   - Say: **"Something shorter, maybe under 200 pages?"**
+   - Let the loop run again
+9. Tap **End** to exit conversation mode
+10. Stop recording
 
-## Template: Coding
+**Length target:** 20–28 seconds. Trim any dead air at the start.
 
-**Launch argument:** `--seed-demo coding`
+**Audio:** include it. The TTS reply is half the point — viewers should hear the agent talk back. App Store autoplays muted, but a tap unmutes.
 
-**Seeded context:** SwiftUI animation questions — pulsing views, ripple effects, button styles.
+### Why this script
 
-**Scripted prompt (type):**
-> What does the `withAnimation` closure return?
-
-*Why this works:* Short technical answer (1-3 sentences), shows the app handling code questions without a long code block eating up recording time.
-
----
-
-## Template: Creative Writing
-
-**Launch argument:** `--seed-demo creative`
-
-**Seeded context:** Writing a portfolio bio and tagline.
-
-**Scripted prompt (type):**
-> Which tagline is your favorite and why?
-
-*Why this works:* Short opinionated answer referencing the seeded conversation — shows memory/context. 2-3 sentences max.
-
----
-
-## Template: Tools & Research
-
-**Launch argument:** `--seed-demo tools`
-
-**Seeded context:** Checking gateway sessions, searching memory for deadlines, weekend planning.
-
-**Scripted prompt (type):**
-> Which deadline is the most urgent right now?
-
-*Why this works:* Short answer referencing the seeded deadlines — 1-2 sentences. Shows the agent has context without a long response.
-
----
-
-## Template: All (Multi-Channel)
-
-**Launch argument:** `--seed-demo all`
-
-Creates 4 channels (Main, Code Help, Writing, Research) each with their own seeded conversation. Good for:
-- **Channel list screenshot** — shows multiple active channels
-- **Scrolling through different conversations** in a single recording
-
----
-
-## Voice Demo (Conversation Mode)
-
-Best recorded on the **General** or **Creative** template.
-
-1. Seed with `--seed-demo general`
-2. Open the Main channel
-3. **Tap** the mic button (enters conversation mode)
-4. Say clearly: **"What's a good book to read this month?"**
-5. Let it transcribe, send, stream the response, and speak it back via TTS
-6. The full loop (listen > transcribe > send > stream > speak) is the money shot
-
-**Push-to-talk variant:**
-1. **Hold** the mic button
-2. Say: **"Remind me to buy groceries later"**
-3. Release — shows the PTT flow
+- The second exchange is what differentiates ClawTalk from every other "voice input" app. Most apps put you in dictation mode for *one* utterance. ClawTalk runs the loop continuously.
+- Short prompts produce short replies → snappy preview without dead time.
+- "Book recommendation" is universally relatable and shows a natural reply.
 
 ---
 
 ## Screenshot Shot List
 
-After seeding, capture these static screenshots (pause recording or use Cmd+S in Simulator):
+Capture on **iPhone 15 Pro Max** simulator (1290 x 2796 px, required). Each
+shot has a launch arg and exact framing notes.
 
-| # | What | How to Get There |
-|---|------|-----------------|
-| 1 | Welcome screen | Fresh install (no `--seed-demo`), first launch |
-| 2 | Text conversation | `--seed-demo general`, open Main channel |
-| 3 | Code conversation | `--seed-demo coding`, open channel, scroll to show code block |
-| 4 | Voice mode active | Tap mic button, capture while "Listening..." is showing |
-| 5 | Channel list | `--seed-demo all`, stay on channel list screen |
-| 6 | Tools dashboard | Open Tools tab (wrench icon) |
-| 7 | Settings | Open Settings, show gateway config section |
-| 8 | Model picker | Open model picker (CPU icon in nav bar, requires WebSocket) |
+| # | What | Launch arg | How to capture |
+|---|------|-----------|----------------|
+| 1 | **Conversation Mode active** | `--seed-demo general` | Open Main channel → tap conversation button → capture while pulsing rings are visible and "Listening…" label is showing. Try to catch the rings mid-pulse (not at the smallest/largest extreme). |
+| 2 | Streaming markdown reply | `--seed-demo coding` | Open the coding channel → scroll to a fully-rendered response with a code block visible. Make sure the **"+"** attachment icon is in the input bar (not the legacy photo icon). |
+| 3 | Onboarding welcome | _(fresh install — delete app first)_ | First launch, on the Welcome step. Shows the text-first onboarding hero. |
+| 4 | Channel list | `--seed-demo all` | Stay on channel list, all 4 channels visible. |
+| 5 | Tools dashboard | `--seed-demo general` | Open Tools (grid icon in nav bar). |
+| 6 | Settings — Voice & TTS | `--seed-demo general` | Open Settings → scroll to the **Voice & TTS** section. Voice Input toggle + TTS Provider picker visible. |
+
+### Specs
+
+- iPhone 15 Pro Max (6.7"): 1290 x 2796 px — **required**
+- iPhone 15 Pro (6.1"): 1179 x 2556 px — recommended (Apple will scale 6.7" down, but native is better)
+- Format: PNG or JPEG, no alpha channel, 72 dpi minimum
 
 ---
 
-## App Preview Specs
+## Available Seed Templates
 
-- **Duration:** 15–30 seconds each
-- **Resolution:** 1290 x 2796 (iPhone 15 Pro Max)
-- **Format:** H.264 or HEVC, .mp4 or .mov
-- **Audio:** Optional (autoplays muted in App Store)
-- **Max previews:** 3
+For reference, the launch args supported by `--seed-demo`:
 
-### Recommended 3 Previews
-
-1. **Voice conversation** — General template, mic tap, full voice loop
-2. **Text chat with code** — Coding template, type prompt, streaming markdown response
-3. **Multi-channel + tools** — All template, flip between channels, open tools dashboard
+| Arg | Seeded context |
+|-----|----------------|
+| `--seed-demo general` | Casual Q&A — weather, memory preference |
+| `--seed-demo coding` | SwiftUI animation questions — code blocks |
+| `--seed-demo creative` | Portfolio bio and tagline writing |
+| `--seed-demo tools` | Gateway sessions, deadlines, weekend planning |
+| `--seed-demo all` | All four channels seeded (Main, Code Help, Writing, Research) |
 
 ---
 
 ## Tips
 
-- **Scroll speed matters** — scroll slowly through history so text is readable in the preview
-- **Pause on the response** — let the camera linger on a fully rendered response for 2-3 seconds
 - **Dark mode is default** — the app looks best in dark mode, which is what ships
-- **Clean the status bar** — in Simulator, the clock and carrier are already clean
+- **Pause on the response** — let the camera linger on a fully rendered response for 2-3 seconds before moving on
 - **Trim dead time** — cut any loading/waiting at the start before the UI appears
+- **For Conversation Mode**: do the recording with a quiet background. The mic picks up room noise less aggressively now (voice processing handles it), but a clean take still reads better.
+- **Scrolling speed** — if the recording includes scrolling, do it slowly so text is readable in the final preview
