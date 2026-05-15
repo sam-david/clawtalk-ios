@@ -56,7 +56,7 @@ struct OnboardingView: View {
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text("Voice and text chat with your\nOpenClaw AI agents.")
+            Text("Chat with your OpenClaw AI agents.\nType, send images, or talk hands-free.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -255,11 +255,11 @@ struct OnboardingView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.openClawRed)
 
-            Text("Voice Setup")
+            Text("Add Voice (Optional)")
                 .font(.title2)
                 .fontWeight(.bold)
 
-            Text("ClawTalk uses an on-device speech model for private voice transcription. Audio never leaves your phone.")
+            Text("Text chat works without this. To also talk to your agent — push-to-talk or hands-free — ClawTalk can transcribe on-device for privacy, or you can enable server-side transcription later in Settings.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -302,7 +302,7 @@ struct OnboardingView: View {
                 }
                 .padding(.bottom, 60)
             } else {
-                primaryButton("Download Model") {
+                primaryButton("Download for On-Device Voice") {
                     Task {
                         await modelManager.downloadModel(size: settingsStore.settings.whisperModelSize)
                         if modelManager.isModelReady {
@@ -311,7 +311,7 @@ struct OnboardingView: View {
                     }
                 }
 
-                Button("Skip Voice Setup") {
+                Button("Skip — I'll just type for now") {
                     settingsStore.settings.voiceInputEnabled = false
                     settingsStore.save()
                     finishOnboarding()

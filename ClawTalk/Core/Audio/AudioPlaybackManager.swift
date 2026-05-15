@@ -11,7 +11,12 @@ final class AudioPlaybackManager: @unchecked Sendable {
 
     func start() throws {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+        // Preserve .voiceChat if AudioCaptureManager already set it for
+        // conversation mode — that mode's AEC is what stops TTS from
+        // looping back through the mic loud enough to cross the
+        // interrupt threshold and cancel the agent's response.
+        let mode: AVAudioSession.Mode = (session.mode == .voiceChat) ? .voiceChat : .default
+        try session.setCategory(.playAndRecord, mode: mode, options: [.defaultToSpeaker, .allowBluetoothHFP])
         try session.setActive(true)
 
         let engine = AVAudioEngine()

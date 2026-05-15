@@ -69,6 +69,19 @@ struct ClawTalkApp: App {
             .tint(.openClawRed)
             .preferredColorScheme(.dark)
             .task {
+                // Pre-warm WhisperKit at app launch so the first
+                // conversation-mode utterance doesn't pay the 3s
+                // CoreML cold-load cost. Triggers Task.detached load
+                // inside the service's init; the eager work runs in
+                // the background while the user navigates to a chat.
+                if settingsStore.settings.voiceInputEnabled,
+                   modelManager.hasDownloadedModel,
+                   cachedSTT == nil {
+                    let warmup = WhisperKitService(modelSize: settingsStore.settings.whisperModelSize)
+                    cachedSTT = warmup
+                    cachedSTTModelSize = settingsStore.settings.whisperModelSize
+                }
+
                 guard settingsStore.settings.useWebSocket,
                       settingsStore.isConfigured else { return }
 
@@ -91,7 +104,13 @@ struct ClawTalkApp: App {
             .onChange(of: settingsStore.settings.ttsProvider) {
                 reconfigureServices()
             }
-            .onChange(of: settingsStore.settings.voiceInputEnabled) {
+            .onChange(of: settingsStore.settings.voiceInputEnabled) { _, enabled in
+                if !enabled, chatViewModel?.isConversationMode == true {
+                    chatViewModel?.exitConversationMode()
+                }
+                reconfigureServices()
+            }
+            .onChange(of: settingsStore.settings.whisperModelSize) {
                 reconfigureServices()
             }
             .onChange(of: settingsStore.elevenLabsAPIKey) {
@@ -169,9 +188,17 @@ struct ClawTalkApp: App {
         let secure = SecureStorage.shared
         let s = settingsStore.settings
 
-        // STT — reuse cached instance if model size hasn't changed
-        let stt: any TranscriptionService
-        if let cached = cachedSTT, cachedSTTModelSize == s.whisperModelSize {
+        // STT — WhisperKit is the on-device transcriber used for
+        // push-to-talk in every config, and for conversation mode when
+        // server-side STT isn't enabled. We keep it loaded whenever
+        // voice input is enabled at all; the only way to skip the
+        // load is to disable Voice Input entirely.
+        let stt: (any TranscriptionService)?
+        if !s.voiceInputEnabled {
+            cachedSTT = nil
+            cachedSTTModelSize = nil
+            stt = nil
+        } else if let cached = cachedSTT, cachedSTTModelSize == s.whisperModelSize {
             stt = cached
         } else {
             let service = WhisperKitService(modelSize: s.whisperModelSize)

@@ -353,8 +353,13 @@ struct SettingsView: View {
         } header: {
             Text("Speech-to-Text")
         } footer: {
-            Text("Runs entirely on-device. Audio never leaves your phone.")
+            if !store.settings.voiceInputEnabled {
+                Text("Voice Input is off — turn it on above to use speech-to-text.")
+            } else {
+                Text("Runs entirely on-device. Audio never leaves your phone.")
+            }
         }
+        .disabled(!store.settings.voiceInputEnabled)
     }
 
     // MARK: - Security Info

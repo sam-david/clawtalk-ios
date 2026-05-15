@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -43,12 +43,14 @@
 		60A5E156C0156F1B2579E368 /* GatewayConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51AAF57BCBF7F5B856060F5E /* GatewayConnection.swift */; };
 		614AED09A9F12EDBA66D91A0 /* ApprovalBannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE64067C102F570893E3ED58 /* ApprovalBannerView.swift */; };
 		64974D211BBDDFCDF76CD22E /* AnyCodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF03EC1575F8AE42DA0B6D14 /* AnyCodable.swift */; };
+		65163E78478B1303CB81F0BB /* TranscriptCleanupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710E7053E9D61C00E2D11E7D /* TranscriptCleanupTests.swift */; };
 		66744E074394ECFDF41E5294 /* MemoryDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 296ABE96C44B26E6202E8629 /* MemoryDetailView.swift */; };
 		69715C4CCD66155151CB7C1D /* ChannelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D0304AECC54813A80F8D722 /* ChannelTests.swift */; };
 		6DEAF7E516A0AF0C099C4738 /* ToolsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 116AB0504E0161F19DB2F903 /* ToolsViewModel.swift */; };
 		75767DE0109B24F67BB8893E /* ToolTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB70777993B2EE4989C5E921 /* ToolTypes.swift */; };
 		7BABFC2629929C1E177E7276 /* OpenResponsesTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3922729499A8407359864A21 /* OpenResponsesTypesTests.swift */; };
 		7D1046F920C390B246DA3C9B /* OpenClawClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CF4890CB4C3341739DAD398 /* OpenClawClient.swift */; };
+		7E7745109A224928AB3AF53A /* TranscriptCleanup.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68927775D1F25CA95895FE1 /* TranscriptCleanup.swift */; };
 		810AB13938695403270112A7 /* ToolTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD5DCDCC8A92DFEE56384845 /* ToolTypesTests.swift */; };
 		815D0FABBF69745A52517163 /* ExecApprovalTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE175481B49B0EE39637BAA /* ExecApprovalTypes.swift */; };
 		8369DB413B8A2F96202C4139 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93351CE74CDF45BFDC168696 /* SettingsView.swift */; };
@@ -80,6 +82,7 @@
 		D12B621DD280DB71E61FF70D /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8807991C12BFF0B4F763D38 /* CanvasView.swift */; };
 		D2DC7F1DE72E3D4FEC327444 /* MessageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08FABE61FDE40A1BD0F90CE6 /* MessageTests.swift */; };
 		D365FC62D3B4C28A93C6F48C /* AppSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72D9A2ED0DD13046136A0DAD /* AppSettingsTests.swift */; };
+		DA40F0372ACEE3219AAC4690 /* InlineMicButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55164B5C9D52EDDA40C0737 /* InlineMicButton.swift */; };
 		DA616A2287B087E3E804132D /* OpenResponsesTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13EBFECCE1B8BD87B05EB0DB /* OpenResponsesTypes.swift */; };
 		E2BFE5C8CD98AA3DEB626C71 /* OpenClawTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 356E47A33B8EE9235948D1B1 /* OpenClawTypesTests.swift */; };
 		E737CEE30F62162070E03A2B /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDBF31DD14D3AB9D672C5803 /* ChatViewModel.swift */; };
@@ -148,8 +151,9 @@
 		6CCF5B7DC9F53344C5AE17A6 /* SSEParsingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSEParsingTests.swift; sourceTree = "<group>"; };
 		6DFC5EC252EFD110D7388382 /* DeviceAuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceAuthStore.swift; sourceTree = "<group>"; };
 		707C4ACFCC95769AFCD1425E /* AudioCaptureManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCaptureManager.swift; sourceTree = "<group>"; };
+		710E7053E9D61C00E2D11E7D /* TranscriptCleanupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptCleanupTests.swift; sourceTree = "<group>"; };
 		72D9A2ED0DD13046136A0DAD /* AppSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsTests.swift; sourceTree = "<group>"; };
-		75AC426B96A923B5288634C3 /* ClawTalk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClawTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		75AC426B96A923B5288634C3 /* ClawTalk.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ClawTalk.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		782C47299E86E32DAAB3137D /* ConversationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationStore.swift; sourceTree = "<group>"; };
 		79B7982FD7F79231E54BF4C8 /* SentenceBoundaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceBoundaryTests.swift; sourceTree = "<group>"; };
 		7D0304AECC54813A80F8D722 /* ChannelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChannelTests.swift; sourceTree = "<group>"; };
@@ -160,10 +164,12 @@
 		9BE175481B49B0EE39637BAA /* ExecApprovalTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExecApprovalTypes.swift; sourceTree = "<group>"; };
 		A3BEBDD1D3F59751BA17C8F8 /* CanvasCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasCapability.swift; sourceTree = "<group>"; };
 		A52511E4A305989FB28449F2 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		A55164B5C9D52EDDA40C0737 /* InlineMicButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InlineMicButton.swift; sourceTree = "<group>"; };
 		A8289BC4CC448727B41A7DBD /* ClawTalkTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ClawTalkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA97D363CCD7D3F347EBC1DA /* MotionCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MotionCapability.swift; sourceTree = "<group>"; };
 		AC0B433CDE7C2E879C21F453 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		B5AB563FB60625CF626E58C6 /* LocationCapability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationCapability.swift; sourceTree = "<group>"; };
+		B68927775D1F25CA95895FE1 /* TranscriptCleanup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptCleanup.swift; sourceTree = "<group>"; };
 		B6CCFAF24F287F7B2D9CCD60 /* SecureStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureStorage.swift; sourceTree = "<group>"; };
 		B8AF269AC268789F7C947781 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		BA9759E219F480122FA93357 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -186,7 +192,7 @@
 		EBE3B44C5498FC75D80BF7C6 /* AddChannelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddChannelView.swift; sourceTree = "<group>"; };
 		F280C889782FC2008D290B40 /* GatewayWebSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayWebSocket.swift; sourceTree = "<group>"; };
 		F433280B62B03548E7A3AC40 /* OpenAITTSService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAITTSService.swift; sourceTree = "<group>"; };
-		F6709EEE801649A16EE7D432 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F6709EEE801649A16EE7D432 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		FD5DCDCC8A92DFEE56384845 /* ToolTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolTypesTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -222,6 +228,7 @@
 			children = (
 				A52511E4A305989FB28449F2 /* ChatView.swift */,
 				CDBF31DD14D3AB9D672C5803 /* ChatViewModel.swift */,
+				A55164B5C9D52EDDA40C0737 /* InlineMicButton.swift */,
 				E9D361B32BA4A9447CEE7887 /* MessageBubble.swift */,
 				3F9B322C8F6F78044D30D75E /* TalkButton.swift */,
 			);
@@ -253,6 +260,7 @@
 				79B7982FD7F79231E54BF4C8 /* SentenceBoundaryTests.swift */,
 				6CCF5B7DC9F53344C5AE17A6 /* SSEParsingTests.swift */,
 				FD5DCDCC8A92DFEE56384845 /* ToolTypesTests.swift */,
+				710E7053E9D61C00E2D11E7D /* TranscriptCleanupTests.swift */,
 			);
 			path = ClawTalkTests;
 			sourceTree = "<group>";
@@ -452,6 +460,7 @@
 			isa = PBXGroup;
 			children = (
 				5EA7A459B743FD2FDB12827D /* OpenAISTTService.swift */,
+				B68927775D1F25CA95895FE1 /* TranscriptCleanup.swift */,
 				4492F0C0579021896BF917A3 /* TranscriptionService.swift */,
 				922E8A5CC8FF34B06EB33A83 /* WhisperKitService.swift */,
 				142BA94DD86DE121B675392C /* WhisperModelManager.swift */,
@@ -512,6 +521,7 @@
 			buildConfigurationList = 048CE90D74A29B6AB3001E30 /* Build configuration list for PBXNativeTarget "ClawTalk" */;
 			buildPhases = (
 				C5ECB2DB2195BD8AB054760A /* Sources */,
+				DC1596EBC1278956C661ADC7 /* Bundle WhisperKit model (Debug only) */,
 				8B7C46DB6103121AEB5F608D /* Resources */,
 				6D0DD614FE5AFE65583FEFF4 /* Frameworks */,
 			);
@@ -543,6 +553,7 @@
 						ProvisioningStyle = Automatic;
 					};
 					CD0769F466ADCA1D6967A1E0 = {
+						DevelopmentTeam = UL35UHH8Q4;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -562,6 +573,7 @@
 				088BBCAE5D712FACD9BCE193 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
 				A838F3C31AA3984B3FBF628D /* XCRemoteSwiftPackageReference "WhisperKit" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -583,6 +595,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		DC1596EBC1278956C661ADC7 /* Bundle WhisperKit model (Debug only) */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Bundle WhisperKit model (Debug only)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/whisperkit-coreml",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" != \"Debug\" ]; then\n  echo \"Skipping bundled WhisperKit model (Release build).\"\n  exit 0\nfi\nSRC=\"$SRCROOT/.dev-resources/whisperkit-coreml\"\nDEST=\"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/whisperkit-coreml\"\nif [ ! -d \"$SRC\" ]; then\n  echo \"No dev-resources WhisperKit model found at $SRC. Skipping bundle.\"\n  exit 0\nfi\nif [ -d \"$DEST\" ] && [ \"$DEST/openai_whisper-small.en\" -nt \"$SRC/openai_whisper-small.en\" ]; then\n  echo \"Bundled WhisperKit model already up to date.\"\n  exit 0\nfi\nmkdir -p \"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\nrsync -a --delete \"$SRC/\" \"$DEST/\"\necho \"Copied dev WhisperKit model into Debug build.\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		13A2C1EE53366A4695113D8A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -601,6 +635,7 @@
 				339A9CDBA9635E2B9402D79B /* SecurityTests.swift in Sources */,
 				CE0CF59288710C19A655BE7A /* SentenceBoundaryTests.swift in Sources */,
 				810AB13938695403270112A7 /* ToolTypesTests.swift in Sources */,
+				65163E78478B1303CB81F0BB /* TranscriptCleanupTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -641,6 +676,7 @@
 				60A5E156C0156F1B2579E368 /* GatewayConnection.swift in Sources */,
 				8D6A137705D074E969B48DEC /* GatewayProtocol.swift in Sources */,
 				3EB3BFC69291F0F7C61BB952 /* GatewayWebSocket.swift in Sources */,
+				DA40F0372ACEE3219AAC4690 /* InlineMicButton.swift in Sources */,
 				345CEEE3A46804B997A12FE6 /* JSONPrettyView.swift in Sources */,
 				CE93E3C05D7F122E7F5D0CBB /* LocationCapability.swift in Sources */,
 				66744E074394ECFDF41E5294 /* MemoryDetailView.swift in Sources */,
@@ -670,6 +706,7 @@
 				75767DE0109B24F67BB8893E /* ToolTypes.swift in Sources */,
 				1C388B80A1504135064978EF /* ToolsView.swift in Sources */,
 				6DEAF7E516A0AF0C099C4738 /* ToolsViewModel.swift in Sources */,
+				7E7745109A224928AB3AF53A /* TranscriptCleanup.swift in Sources */,
 				3E222D7CFE828AB97D76B1F7 /* TranscriptionService.swift in Sources */,
 				5DEDA8097096002D0392878D /* VoiceWakeCapability.swift in Sources */,
 				A999F41C0E40F49315386149 /* WhisperKitService.swift in Sources */,
@@ -693,14 +730,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = XL75YR3YGP;
+				CURRENT_PROJECT_VERSION = 3;
 				INFOPLIST_FILE = ClawTalk/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.openclaw.clawtalk;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -806,14 +842,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = XL75YR3YGP;
+				CURRENT_PROJECT_VERSION = 3;
 				INFOPLIST_FILE = ClawTalk/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.openclaw.clawtalk;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

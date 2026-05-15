@@ -305,8 +305,8 @@ actor GatewayWebSocket {
         logger.debug("handshake: v2 payload built, deviceId=\(identity.deviceId.prefix(8), privacy: .public)…")
 
         var params: [String: AnyCodable] = [
-            "minProtocol": AnyCodable(GATEWAY_PROTOCOL_VERSION),
-            "maxProtocol": AnyCodable(GATEWAY_PROTOCOL_VERSION),
+            "minProtocol": AnyCodable(GATEWAY_MIN_PROTOCOL_VERSION),
+            "maxProtocol": AnyCodable(GATEWAY_MAX_PROTOCOL_VERSION),
             "client": AnyCodable([
                 "id": AnyCodable("openclaw-ios"),
                 "displayName": AnyCodable("ClawTalk"),

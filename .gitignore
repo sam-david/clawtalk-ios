@@ -38,3 +38,6 @@ APP_STORE_PLAN.md
 docs/APP_STORE_METADATA.md
 docs/SUBMISSION_GAMEPLAN.md
 docs/TESTING_PLAN.md
+
+# Dev-only large assets (Debug-bundled WhisperKit models, etc.)
+.dev-resources/

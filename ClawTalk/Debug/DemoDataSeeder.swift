@@ -21,8 +21,9 @@ enum DemoDataSeeder {
               idx + 1 < args.count else { return }
         let template = args[idx + 1].lowercased()
 
-        // Skip onboarding so we land on the channel list
-        UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+        // Skip onboarding so we land on the channel list.
+        // Key matches SettingsStore's persistence key (snake_case).
+        UserDefaults.standard.set(true, forKey: "has_completed_onboarding")
 
         if template == "clear" {
             ConversationStore.shared.clearAll()

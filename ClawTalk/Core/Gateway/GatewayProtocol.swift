@@ -1,7 +1,19 @@
 import Foundation
 
-/// Gateway WebSocket protocol version.
-let GATEWAY_PROTOCOL_VERSION = 3
+/// Lowest gateway WebSocket protocol version this client can talk.
+/// Kept at 3 so the App Store build (and any existing users on older
+/// gateways) keep working when this code ships in a future update.
+let GATEWAY_MIN_PROTOCOL_VERSION = 3
+
+/// Highest gateway WebSocket protocol version this client supports.
+/// Bumped to 4 alongside OpenClaw upstream commit `330ba1fa31`
+/// (2026-05-07, "move canvas to plugin surfaces"). The gateway rejects
+/// the handshake unless its own `PROTOCOL_VERSION` falls within the
+/// `[min, max]` range the client declares.
+let GATEWAY_MAX_PROTOCOL_VERSION = 4
+
+/// Backwards-compatible alias for code that doesn't care about the range.
+let GATEWAY_PROTOCOL_VERSION = GATEWAY_MAX_PROTOCOL_VERSION
 
 // MARK: - Frame Types
 

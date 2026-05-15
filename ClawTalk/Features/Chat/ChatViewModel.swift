@@ -62,7 +62,7 @@ final class ChatViewModel {
         }
     }
 
-    func stopRecordingAndSend() {
+    func stopRecordingAndSend(images: [Data] = []) {
         guard state == .recording else { return }
         if isConversationMode { return }
 
@@ -89,7 +89,7 @@ final class ChatViewModel {
                     return
                 }
 
-                await sendMessage(transcript)
+                await sendMessage(transcript, images: images.isEmpty ? nil : images)
             } catch {
                 errorMessage = "Transcription failed: \(error.localizedDescription)"
                 state = .idle
@@ -620,7 +620,7 @@ final class ChatViewModel {
 
     // MARK: - Lifecycle
 
-    func configure(transcription: any TranscriptionService, speech: any SpeechService) {
+    func configure(transcription: (any TranscriptionService)?, speech: any SpeechService) {
         self.transcriptionService = transcription
         self.speechService = speech
     }
